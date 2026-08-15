@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import AuthGate from "@/components/AuthGate";
 import KeyboardInset from "@/components/KeyboardInset";
 import SplashOverlay from "@/components/SplashOverlay";
 import { cakeStrings } from "@/lib/strings";
@@ -36,8 +37,8 @@ export const viewport: Viewport = {
   // KeyboardInset exists as well rather than instead.
   interactiveWidget: "resizes-content",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#c99a3c" },
-    { media: "(prefers-color-scheme: dark)", color: "#1b120c" },
+    { media: "(prefers-color-scheme: light)", color: "#1c1a17" },
+    { media: "(prefers-color-scheme: dark)", color: "#14120f" },
   ],
 };
 
@@ -61,7 +62,7 @@ export default function RootLayout({
         {/* In the layout, so it plays once per document load and not on
             client-side navigations between pages. */}
         <SplashOverlay />
-        {children}
+        <AuthGate>{children}</AuthGate>
       </body>
     </html>
   );

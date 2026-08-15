@@ -4,26 +4,26 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* "Rich patisserie": chocolate brown, warm cream, antique gold — the whole
-   app's palette, not scoped to anything, since this app has no other
-   identity to avoid clashing with. (This started life as a mini-app bolted
-   onto an unrelated trip-planner repo, where these same values lived behind
-   a `.cakes-theme` class so they didn't leak into that app's own teal — see
-   git history / the sibling repo if you want that story. Standalone, they
-   just become the palette.) */
+/* "Cream and black": warm cream, near-black — the whole app's palette, not
+   scoped to anything, since this app has no other identity to avoid
+   clashing with. (This started life as a mini-app bolted onto an unrelated
+   trip-planner repo, where these same values lived behind a `.cakes-theme`
+   class so they didn't leak into that app's own teal — see git history /
+   the sibling repo if you want that story. Standalone, they just become the
+   palette.) */
 :root {
   color-scheme: light;
 
-  --background: #f8efe1;
-  --foreground: #3c2a1e;
-  --surface: #fffaf2;
-  --border: #e6d4b8;
-  --muted: #8c7159;
+  --background: #f3ecdc;
+  --foreground: #1c1a17;
+  --surface: #faf6ec;
+  --border: #ddd3ba;
+  --muted: #6f6a5e;
 
-  --primary: #c99a3c;
-  --primary-hover: #a97f2f;
-  --primary-tint: #faf1de;
-  --primary-foreground: #2b1d12;
+  --primary: #1c1a17;
+  --primary-hover: #35322c;
+  --primary-tint: #eae2cc;
+  --primary-foreground: #f3ecdc;
   --card: var(--surface);
   --card-foreground: var(--foreground);
   --popover: var(--surface);
@@ -76,16 +76,16 @@
 .dark {
   color-scheme: dark;
 
-  --background: #1b120c;
-  --foreground: #f3e6d3;
-  --surface: #2a1d14;
-  --border: #43301f;
-  --muted: #b8a289;
+  --background: #14120f;
+  --foreground: #f3ecdc;
+  --surface: #201d18;
+  --border: #3a352c;
+  --muted: #a89f8c;
 
-  --primary: #e0af52;
-  --primary-hover: #eec37a;
-  --primary-tint: #3a2c15;
-  --primary-foreground: #241a10;
+  --primary: #f3ecdc;
+  --primary-hover: #e4d9bb;
+  --primary-tint: #2a2620;
+  --primary-foreground: #14120f;
   --card: var(--surface);
   --card-foreground: var(--foreground);
   --popover: var(--surface);
@@ -101,16 +101,16 @@
   :root:not(.light) {
     color-scheme: dark;
 
-    --background: #1b120c;
-    --foreground: #f3e6d3;
-    --surface: #2a1d14;
-    --border: #43301f;
-    --muted: #b8a289;
+    --background: #14120f;
+    --foreground: #f3ecdc;
+    --surface: #201d18;
+    --border: #3a352c;
+    --muted: #a89f8c;
 
-    --primary: #e0af52;
-    --primary-hover: #eec37a;
-    --primary-tint: #3a2c15;
-    --primary-foreground: #241a10;
+    --primary: #f3ecdc;
+    --primary-hover: #e4d9bb;
+    --primary-tint: #2a2620;
+    --primary-foreground: #14120f;
     --card: var(--surface);
     --card-foreground: var(--foreground);
     --popover: var(--surface);

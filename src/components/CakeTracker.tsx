@@ -8,6 +8,7 @@ import {
   CalendarIcon,
   ChevronLeftIcon,
   ListIcon,
+  LogOutIcon,
   PlusIcon,
   ReceiptIcon,
   SquarePenIcon,
@@ -21,6 +22,7 @@ import CakeLogo from "@/components/CakeLogo";
 import ManageCakeTypesSheet from "@/components/ManageCakeTypesSheet";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { logout } from "@/lib/auth";
 import {
   addCakeSale,
   deleteCakeSale,
@@ -101,6 +103,16 @@ export default function CakeTracker() {
             {s.soldSoFar(summary.allTimeCount)}
           </p>
         </div>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          aria-label={s.logout}
+          onClick={logout}
+          className="shrink-0 text-muted hover:text-foreground"
+        >
+          <LogOutIcon className="size-4" />
+        </Button>
       </div>
 
       <div className="flex items-center gap-2">
