@@ -1,0 +1,82 @@
+/**
+ * All UI text for the cake tracker, in Hebrew only — no language switcher,
+ * no dictionary/locale system, just plain strings. The baker only reads
+ * Hebrew, so there's nothing to route through.
+ */
+export const cakeStrings = {
+  title: "מכירת עוגות",
+  soldSoFar: (count: number) =>
+    count === 1 ? "עוגה אחת נמכרה עד כה" : `${count} עוגות נמכרו עד כה`,
+  logSale: "רישום מכירה",
+  addSale: "הוספת מכירה",
+  editSale: "עריכת מכירה",
+  today: "היום",
+  last7Days: "7 הימים האחרונים",
+  thisMonth: "החודש",
+  allTime: "סך הכול",
+  bestSeller: (cakeType: string, quantity: number) =>
+    `הנמכר ביותר: ${cakeType} (נמכרו ${quantity})`,
+  emptyBody:
+    "עדיין לא נרשמו מכירות. הקישו על ”רישום מכירה” אחרי שהעוגה הבאה יוצאת לדרך.",
+  cakeType: "עוגה",
+  cakeTypePlaceholder: "בחרו עוגה",
+  quantity: "כמות",
+  priceEach: "מחיר ליחידה",
+  date: "תאריך",
+  selectDate: "בחרו תאריך",
+  noteOptional: "הערה (לא חובה)",
+  errorCakeType: "בחרו סוג עוגה.",
+  errorQuantity: "הכמות חייבת להיות לפחות 1.",
+  errorPrice: "המחיר לא יכול להיות שלילי.",
+  errorDate: "בחרו תאריך.",
+  editSaleAria: "עריכת מכירה",
+  deleteSaleAria: "מחיקת מכירה",
+  cancel: "ביטול",
+  saveChanges: "שמירת שינויים",
+  noCakeTypesInSaleForm:
+    "עדיין לא הוספתם סוגי עוגות. הוסיפו סוג עוגה כדי להתחיל לרשום מכירות.",
+  manageCakes: "ניהול סוגי עוגות",
+  manageCakesTitle: "סוגי עוגות",
+  manageCakesBody:
+    "הוסיפו את העוגות שאתם מוכרים, עם מחיר לכל אחת — כדי שיופיעו כרשימת בחירה מהירה בעת רישום מכירה.",
+  cakeNamePlaceholder: "למשל עוגת שוקולד",
+  errorCakeTypeName: "יש להזין שם עוגה.",
+  defaultPrice: "מחיר",
+  errorDefaultPrice: "יש להזין מחיר.",
+  addCakeType: "הוספת עוגה",
+  noCakeTypesYet: "עדיין אין סוגי עוגות. הוסיפו את הראשון למטה.",
+  deleteCakeTypeAria: "מחיקת סוג עוגה",
+  duplicateCakeType: "כבר קיימת עוגה בשם הזה.",
+  reportTitle: "דוח מכירות",
+  reportSubtitle: "לפי חודשים ושנים",
+  reportMonthly: "חודשי",
+  reportYearly: "שנתי",
+  reportEmptyTitle: "אין עדיין נתונים",
+  reportEmptyBody: "ברגע שתירשמו כמה מכירות, יופיע כאן דוח לפי חודשים ושנים.",
+  cakesCount: (count: number) => (count === 1 ? "עוגה אחת" : `${count} עוגות`),
+  backAria: "חזרה",
+  expensesTitle: "הוצאות",
+  expensesNavSubtitle: "מה קניתם ובכמה",
+  spentSoFar: (amount: string) => `${amount} הוצאות עד כה`,
+  logExpense: "רישום הוצאה",
+  addExpense: "הוספת הוצאה",
+  editExpense: "עריכת הוצאה",
+  spentToday: "היום",
+  spentLast7Days: "7 הימים האחרונים",
+  spentThisMonth: "החודש",
+  spentAllTime: "סך הכול",
+  expenseDescription: "על מה?",
+  expenseDescriptionPlaceholder: "למשל קמח וסוכר",
+  expenseCategory: "קטגוריה",
+  expenseAmount: "סכום",
+  errorExpenseDescription: "יש לפרט על מה ההוצאה.",
+  errorExpenseAmount: "הסכום חייב להיות גדול מאפס.",
+  editExpenseAria: "עריכת הוצאה",
+  deleteExpenseAria: "מחיקת הוצאה",
+  expensesEmptyBody:
+    "עדיין לא נרשמו הוצאות. הקישו על ”רישום הוצאה” אחרי הקנייה הבאה.",
+  expensesByCategory: "לפי קטגוריה",
+} as const;
+
+/** Fixed to the Israeli shekel — no picker, no per-device setting. */
+export const CAKE_CURRENCY = "₪";

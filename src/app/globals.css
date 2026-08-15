@@ -1,0 +1,264 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* "Rich patisserie": chocolate brown, warm cream, antique gold — the whole
+   app's palette, not scoped to anything, since this app has no other
+   identity to avoid clashing with. (This started life as a mini-app bolted
+   onto an unrelated trip-planner repo, where these same values lived behind
+   a `.cakes-theme` class so they didn't leak into that app's own teal — see
+   git history / the sibling repo if you want that story. Standalone, they
+   just become the palette.) */
+:root {
+  color-scheme: light;
+
+  --background: #f8efe1;
+  --foreground: #3c2a1e;
+  --surface: #fffaf2;
+  --border: #e6d4b8;
+  --muted: #8c7159;
+
+  --primary: #c99a3c;
+  --primary-hover: #a97f2f;
+  --primary-tint: #faf1de;
+  --primary-foreground: #2b1d12;
+  --card: var(--surface);
+  --card-foreground: var(--foreground);
+  --popover: var(--surface);
+  --popover-foreground: var(--foreground);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted-foreground: var(--muted);
+  --accent: var(--primary-tint);
+  --accent-foreground: var(--primary-hover);
+  --destructive: oklch(0.577 0.245 27.325);
+  --input: var(--border);
+  --ring: var(--primary);
+  --radius: 0.75rem;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-border: var(--border);
+  --color-muted: var(--muted);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-tint: var(--primary-tint);
+  --color-primary-foreground: var(--primary-foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-sans);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+.dark {
+  color-scheme: dark;
+
+  --background: #1b120c;
+  --foreground: #f3e6d3;
+  --surface: #2a1d14;
+  --border: #43301f;
+  --muted: #b8a289;
+
+  --primary: #e0af52;
+  --primary-hover: #eec37a;
+  --primary-tint: #3a2c15;
+  --primary-foreground: #241a10;
+  --card: var(--surface);
+  --card-foreground: var(--foreground);
+  --popover: var(--surface);
+  --popover-foreground: var(--foreground);
+  --muted-foreground: var(--muted);
+  --accent: var(--primary-tint);
+  --accent-foreground: var(--primary-hover);
+  --input: var(--border);
+  --ring: var(--primary);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    color-scheme: dark;
+
+    --background: #1b120c;
+    --foreground: #f3e6d3;
+    --surface: #2a1d14;
+    --border: #43301f;
+    --muted: #b8a289;
+
+    --primary: #e0af52;
+    --primary-hover: #eec37a;
+    --primary-tint: #3a2c15;
+    --primary-foreground: #241a10;
+    --card: var(--surface);
+    --card-foreground: var(--foreground);
+    --popover: var(--surface);
+    --popover-foreground: var(--foreground);
+    --muted-foreground: var(--muted);
+    --accent: var(--primary-tint);
+    --accent-foreground: var(--primary-hover);
+    --input: var(--border);
+    --ring: var(--primary);
+  }
+}
+
+/* Buttons, inputs, textareas, and cards all come from src/components/ui/
+   (shadcn) — no hand-rolled .btn/.field/.card classes. */
+
+/* Drop the native number stepper. It renders as a pair of tiny grey arrows
+   floating inside the field (amounts, prices) that don't match anything else
+   in the UI, and it's dead weight on touch where the numeric keypad is the
+   real input. */
+input[type="number"] {
+  appearance: textfield;
+}
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+/* App splash loader (src/components/AppSplash.tsx). Hand-written keyframes
+   rather than Tailwind's animate-ping/-pulse: the rings need staggered delays
+   and a longer, softer curve than the presets give. */
+
+/* How long the full-load overlay (SplashOverlay) is held before it fades.
+   The hold is deliberate — the server is often quick enough that an
+   undelayed splash is a flicker — so it's the one number to tune if the
+   app should feel snappier or the loader should linger. */
+:root {
+  --splash-hold: 600ms;
+  --splash-fade: 450ms;
+}
+
+.splash-overlay {
+  position: fixed;
+  inset: 0;
+  /* Above everything it has to cover: the select/dropdown popups use 1000. */
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  background: var(--background);
+  /* Two animations: the fade, then a 1ms one that collapses the box. Chromium
+     will not apply `visibility: hidden` from an animation's fill state here
+     (both animations report `finished` and it still computes `visible`), so
+     the collapse is a transform — reliably filled, and it retires the layer
+     instead of leaving a transparent full-screen div over the app forever.
+     It runs only after the fade, so the scale is never seen. */
+  animation:
+    splash-dismiss var(--splash-fade) ease-out var(--splash-hold) forwards,
+    splash-retire 1ms linear calc(var(--splash-hold) + var(--splash-fade))
+      forwards;
+}
+
+@keyframes splash-dismiss {
+  to {
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
+@keyframes splash-retire {
+  to {
+    transform: scale(0);
+  }
+}
+
+.splash-ring {
+  position: absolute;
+  width: 5rem;
+  height: 5rem;
+  border-radius: 9999px;
+  border: 2px solid var(--primary);
+  opacity: 0;
+  animation: splash-sonar 2.7s cubic-bezier(0.15, 0.6, 0.3, 1) infinite;
+}
+
+.splash-mark {
+  animation: splash-breathe 2.7s ease-in-out infinite;
+}
+
+.splash-caption {
+  animation: splash-rise 0.5s ease-out both;
+}
+
+.splash-bar {
+  animation: splash-bar 1.4s ease-in-out infinite;
+}
+
+@keyframes splash-sonar {
+  0% {
+    transform: scale(0.72);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+@keyframes splash-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes splash-rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes splash-bar {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(200%);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}
