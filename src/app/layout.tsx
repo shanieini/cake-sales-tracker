@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import AuthGate from "@/components/AuthGate";
 import KeyboardInset from "@/components/KeyboardInset";
 import SplashOverlay from "@/components/SplashOverlay";
 import { cakeStrings } from "@/lib/strings";
@@ -61,7 +62,7 @@ export default function RootLayout({
         {/* In the layout, so it plays once per document load and not on
             client-side navigations between pages. */}
         <SplashOverlay />
-        {children}
+        <AuthGate>{children}</AuthGate>
       </body>
     </html>
   );

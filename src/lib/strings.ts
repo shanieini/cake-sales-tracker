@@ -76,6 +76,13 @@ export const cakeStrings = {
   expensesEmptyBody:
     "עדיין לא נרשמו הוצאות. הקישו על ”רישום הוצאה” אחרי הקנייה הבאה.",
   expensesByCategory: "לפי קטגוריה",
+  loginTitle: "התחברות",
+  loginSubtitle: "היכנסו כדי לראות את הנתונים שלכם",
+  username: "שם משתמש",
+  password: "סיסמה",
+  login: "כניסה",
+  errorLogin: "שם משתמש או סיסמה שגויים.",
+  logout: "התנתקות",
 } as const;
 
 /** Fixed to the Israeli shekel — no picker, no per-device setting. */
