@@ -18,6 +18,15 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: cakeStrings.title,
   description: "מעקב אחרי מכירות עוגות, הוצאות, ודוח מכירות חודשי ושנתי.",
+  // iOS reads this instead of the web manifest for "Add to Home Screen":
+  // `capable` drops the Safari chrome once launched from the home screen,
+  // and `black-translucent` lets the app's own background show through
+  // the status bar instead of a plain white or black band.
+  appleWebApp: {
+    capable: true,
+    title: cakeStrings.title,
+    statusBarStyle: "black-translucent",
+  },
 };
 
 export const viewport: Viewport = {

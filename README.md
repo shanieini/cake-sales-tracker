@@ -20,6 +20,17 @@ npm run dev
 Open [http://localhost:3000](http://localhost:3000). That's it — no
 environment variables, no database to set up.
 
+## Installing it on a phone
+
+The app is a PWA, so it installs straight from the browser — no app store:
+
+- **Android (Chrome):** open the site → ⋮ menu → **Add to Home screen**.
+- **iPhone (Safari):** open the site → Share button → **Add to Home Screen**.
+
+Either way it lands on the home screen with the cupcake icon and opens
+full-screen, with no address bar — indistinguishable from a "real" app,
+because as far as the OS is concerned it now is one.
+
 ## How it's put together
 
 - **No login, no backend.** `src/lib/store.ts` keeps sales, cake types, and
@@ -47,6 +58,14 @@ environment variables, no database to set up.
   mark + a sliding progress bar, pure CSS keyframes so it paints with the
   first HTML and needs no client JS to appear), shown on every full page
   load via the root layout and on route-level loading via `loading.tsx`.
+- **Installable as a real home-screen app.** `manifest.ts` (Next's file-based
+  manifest convention) plus `icon.tsx` / `apple-icon.tsx` / `icons/` cover
+  every icon surface — browser tab, iOS home screen, and the two Android
+  install sizes (a plain tile and a "maskable" one with extra padding so
+  Android's circular/squircle crop doesn't clip the mark) — all rendered
+  from one shared `AppIconTile` (`src/lib/app-icon-mark.tsx`) via
+  `ImageResponse`, so the favicon and the installed-app icon are guaranteed
+  to match the mark used inside the app itself.
 
 ### The three pages
 
@@ -127,6 +146,6 @@ here).
   pattern (`summarizeByPeriod`, `RevenueChart`) is already there to extend.
 - An explicit light/dark/system theme toggle (currently OS-only, no
   settings page exists yet to put one on).
-- PWA install support (a manifest, home-screen icons, offline caching via a
-  service worker) — not built yet; only the mobile keyboard-inset handling
-  (`KeyboardInset.tsx`) made the trip so far.
+- Offline caching via a service worker — the app can be installed (see
+  above) but a hard-offline reload before the browser has cached anything
+  will still fail; a service worker would fix that.
