@@ -37,8 +37,8 @@ export const viewport: Viewport = {
   // KeyboardInset exists as well rather than instead.
   interactiveWidget: "resizes-content",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#c99a3c" },
-    { media: "(prefers-color-scheme: dark)", color: "#1b120c" },
+    { media: "(prefers-color-scheme: light)", color: "#1c1a17" },
+    { media: "(prefers-color-scheme: dark)", color: "#14120f" },
   ],
 };
 

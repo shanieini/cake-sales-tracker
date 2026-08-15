@@ -13,7 +13,7 @@ import type { ExpenseCategory } from "./types";
 /**
  * `{ label, Icon, color }` per expense category, rendered via the shared
  * `IconTile` component (see `ExpenseCategoryBadge.tsx`). Colors are spread
- * around the wheel and kept clear of the gold `--primary`, so a badge never
+ * around the wheel and kept clear of the black `--primary`, so a badge never
  * reads as a UI accent.
  */
 export const EXPENSE_CATEGORY_META: Record<
