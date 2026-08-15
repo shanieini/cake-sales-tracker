@@ -40,8 +40,9 @@ environment variables, no database to set up.
   focus rings all re-theme together; dark mode follows the OS via
   `prefers-color-scheme`, no toggle built yet.
 - **Its own logo and loading splash** instead of a generic icon: `CakeLogo.tsx`
-  is a two-tier cake with a lit candle, inline SVG on lucide's own 24×24 grid
-  so it drops into the same size classes as any lucide icon. `AppSplash.tsx`
+  is a cupcake with a frosting swirl and a cherry, inline SVG on lucide's own
+  24×24 grid so it drops into the same size classes as any lucide icon.
+  `AppSplash.tsx`
   / `SplashOverlay.tsx` are the branded loader (sonar rings + a breathing
   mark + a sliding progress bar, pure CSS keyframes so it paints with the
   first HTML and needs no client JS to appear), shown on every full page
