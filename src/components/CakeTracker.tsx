@@ -13,6 +13,7 @@ import {
   ReceiptIcon,
   SquarePenIcon,
   SunIcon,
+  TagsIcon,
   Trash2Icon,
   TrendingUpIcon,
   TrophyIcon,
@@ -215,6 +216,15 @@ export default function CakeTracker() {
             <span className="flex min-w-0 items-center gap-2">
               <ReceiptIcon className="size-4 shrink-0 text-primary" aria-hidden />
               <span className="truncate text-sm font-medium">{s.expensesTitle}</span>
+            </span>
+            <ChevronLeftIcon className="size-4 shrink-0 text-muted" aria-hidden />
+          </Card>
+        </Link>
+        <Link href="/cakes" className="col-span-2 block">
+          <Card className="flex-row items-center justify-between gap-2 p-3.5 shadow-sm transition-colors hover:bg-muted/50">
+            <span className="flex min-w-0 items-center gap-2">
+              <TagsIcon className="size-4 shrink-0 text-primary" aria-hidden />
+              <span className="truncate text-sm font-medium">{s.cakesNavTitle}</span>
             </span>
             <ChevronLeftIcon className="size-4 shrink-0 text-muted" aria-hidden />
           </Card>
