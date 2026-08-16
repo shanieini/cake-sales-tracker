@@ -3,7 +3,7 @@
  * calendar day, not an instant, and `new Date("2026-04-12")` is already UTC
  * midnight — formatting that in a timezone behind UTC would show the 11th.
  */
-export function formatDay(isoDate: string, localeTag = "en-US"): string {
+export function formatDay(isoDate: string, localeTag = "he-IL"): string {
   const date = new Date(`${isoDate}T00:00:00Z`);
   if (Number.isNaN(date.getTime())) return isoDate;
 
