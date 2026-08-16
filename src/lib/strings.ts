@@ -22,6 +22,7 @@ export const cakeStrings = {
   cakeTypePlaceholder: "בחרו עוגה",
   quantity: "כמות",
   priceEach: "מחיר ליחידה",
+  paymentMethod: "אמצעי תשלום",
   date: "תאריך",
   selectDate: "בחרו תאריך",
   noteOptional: "הערה (לא חובה)",

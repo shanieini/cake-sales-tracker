@@ -26,10 +26,12 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import DateField from "@/components/DateField";
+import PaymentMethodBadge from "@/components/PaymentMethodBadge";
+import { PAYMENT_METHODS, PAYMENT_METHOD_META } from "@/lib/payment-methods";
 import { cakeStrings as s } from "@/lib/strings";
 import { toIsoDate } from "@/lib/summarize";
 import type { CakeSaleInput } from "@/lib/store";
-import type { CakeSale, CakeType } from "@/lib/types";
+import type { CakeSale, CakeType, PaymentMethod } from "@/lib/types";
 
 type Props = {
   open: boolean;
@@ -170,6 +172,9 @@ function SaleForm({
     const data = new FormData(event.currentTarget);
     const quantity = Number(data.get("quantity"));
     const pricePerUnit = Number(price);
+    const paymentMethod = String(
+      data.get("paymentMethod") ?? "cash",
+    ) as PaymentMethod;
     const date = String(data.get("date") ?? "");
     const note = String(data.get("note") ?? "").trim();
 
@@ -192,6 +197,7 @@ function SaleForm({
       cakeType: cakeTypeName,
       quantity,
       pricePerUnit,
+      paymentMethod,
       date,
       note: note || undefined,
     });
@@ -263,6 +269,29 @@ function SaleForm({
             className="h-11"
           />
         </div>
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="paymentMethod">{s.paymentMethod}</Label>
+        <Select name="paymentMethod" defaultValue={editing?.paymentMethod ?? "cash"}>
+          <SelectTrigger id="paymentMethod" className="h-11 w-full text-base">
+            <SelectValue>
+              {(value: PaymentMethod) => (
+                <>
+                  <PaymentMethodBadge method={value} />
+                  {PAYMENT_METHOD_META[value].label}
+                </>
+              )}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            {PAYMENT_METHODS.map((method) => (
+              <SelectItem key={method} value={method}>
+                <PaymentMethodBadge method={method} />
+                {PAYMENT_METHOD_META[method].label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="date">{s.date}</Label>

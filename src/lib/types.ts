@@ -1,3 +1,8 @@
+/** Fixed, like expense categories — a bakery's payment options don't vary
+ * from baker to baker, so there's no manager UI for these, just a picker.
+ * See `payment-methods.ts` for labels/colors/icons. */
+export type PaymentMethod = "cash" | "credit" | "bit" | "paybox" | "bank_transfer";
+
 export type CakeSale = {
   id: string;
   /** e.g. "Chocolate cake", "Lemon cupcakes" — free text, not a fixed list,
@@ -10,6 +15,11 @@ export type CakeSale = {
   /** Calendar day the sale happened, as `YYYY-MM-DD` (matches what a native
    * `<input type="date">` produces). */
   date: string;
+  /** Optional, not required: added after this app already had real sales
+   * logged, and those shouldn't need backfilling to stay valid. The sale
+   * form defaults new and edited sales to "cash" regardless, so this only
+   * stays empty for sales that predate the field. */
+  paymentMethod?: PaymentMethod;
   note?: string;
   /** When the row was created, for stable ordering of same-day sales. */
   createdAt: string;

@@ -103,9 +103,37 @@ describe("AddSaleSheet", () => {
     const user = userEvent.setup();
     renderSheet({ editing: makeSale() }); // starts on Lemon cake, price 8
 
-    await user.click(screen.getByRole("combobox"));
+    await user.click(screen.getByRole("combobox", { name: "עוגה" }));
     await user.click(await screen.findByRole("option", { name: "Custom order" }));
 
     expect(screen.getByLabelText("מחיר ליחידה")).toHaveValue(null);
+  });
+
+  it("defaults a new sale's payment method to cash and submits whichever one is picked", async () => {
+    const user = userEvent.setup();
+    const onSave = vi.fn();
+    renderSheet({ onSave });
+
+    expect(screen.getByRole("combobox", { name: "אמצעי תשלום" })).toHaveTextContent(
+      "מזומן",
+    );
+
+    await user.click(screen.getByRole("combobox", { name: "עוגה" }));
+    await user.click(await screen.findByRole("option", { name: "Chocolate cake" }));
+    await user.click(screen.getByRole("combobox", { name: "אמצעי תשלום" }));
+    await user.click(await screen.findByRole("option", { name: "ביט" }));
+    await user.click(screen.getByRole("button", { name: "הוספת מכירה" }));
+
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({ paymentMethod: "bit" }),
+    );
+  });
+
+  it("preserves an existing sale's payment method when editing it", () => {
+    renderSheet({ editing: makeSale({ paymentMethod: "bank_transfer" }) });
+
+    expect(screen.getByRole("combobox", { name: "אמצעי תשלום" })).toHaveTextContent(
+      "העברה בנקאית",
+    );
   });
 });
