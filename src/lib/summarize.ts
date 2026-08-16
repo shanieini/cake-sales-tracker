@@ -244,6 +244,39 @@ export function summarizeByYear(sales: CakeSale[]): PeriodSummary[] {
   );
 }
 
+export type CakeTypeSummary = {
+  cakeType: string;
+  quantity: number;
+  revenue: number;
+};
+
+/**
+ * Units sold and revenue per cake type, most units first — same ranking
+ * `topSellerFrom` uses for "best seller", just for the whole menu instead
+ * of only the winner, so a baker can see every cake ranked against every
+ * other one, not just which single cake is on top. Only cake types with at
+ * least one sale appear, mirroring `byCategory` on the expense side. All
+ * sales in, no date filtering — this is a menu-wide ranking, not tied to
+ * the month/year view the rest of the report page toggles between.
+ */
+export function summarizeByCakeType(sales: CakeSale[]): CakeTypeSummary[] {
+  const byType = new Map<string, { quantity: number; revenue: number }>();
+  for (const sale of sales) {
+    const entry = byType.get(sale.cakeType) ?? { quantity: 0, revenue: 0 };
+    entry.quantity += sale.quantity;
+    entry.revenue += saleTotal(sale);
+    byType.set(sale.cakeType, entry);
+  }
+
+  return [...byType.entries()]
+    .map(([cakeType, { quantity, revenue }]) => ({
+      cakeType,
+      quantity,
+      revenue: round2(revenue),
+    }))
+    .sort((a, b) => b.quantity - a.quantity);
+}
+
 export type ExpenseSummary = {
   todayTotal: number;
   weekTotal: number;

@@ -5,6 +5,7 @@ import {
   groupExpensesByDay,
   groupSalesByDay,
   saleTotal,
+  summarizeByCakeType,
   summarizeByMonth,
   summarizeByYear,
   summarizeCakeExpenses,
@@ -234,6 +235,24 @@ describe("summarizeByYear", () => {
       cakeType: "Lemon cake",
       quantity: 6,
     });
+  });
+});
+
+describe("summarizeByCakeType", () => {
+  it("returns an empty array for no sales", () => {
+    expect(summarizeByCakeType([])).toEqual([]);
+  });
+
+  it("sums quantity and revenue per cake type, most units first", () => {
+    const sales = [
+      makeSale({ cakeType: "Chocolate cake", quantity: 3, pricePerUnit: 20 }),
+      makeSale({ cakeType: "Lemon cake", quantity: 5, pricePerUnit: 10 }),
+      makeSale({ cakeType: "Chocolate cake", quantity: 1, pricePerUnit: 20 }),
+    ];
+    expect(summarizeByCakeType(sales)).toEqual([
+      { cakeType: "Lemon cake", quantity: 5, revenue: 50 },
+      { cakeType: "Chocolate cake", quantity: 4, revenue: 80 },
+    ]);
   });
 });
 
