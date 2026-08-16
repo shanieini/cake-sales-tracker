@@ -54,6 +54,7 @@ export const cakeStrings = {
   reportEmptyTitle: "אין עדיין נתונים",
   reportEmptyBody: "ברגע שתירשמו כמה מכירות, יופיע כאן דוח לפי חודשים ושנים.",
   cakesCount: (count: number) => (count === 1 ? "עוגה אחת" : `${count} עוגות`),
+  reportByCakeType: "לפי סוג עוגה",
   backAria: "חזרה",
   expensesTitle: "הוצאות",
   expensesNavSubtitle: "מה קניתם ובכמה",

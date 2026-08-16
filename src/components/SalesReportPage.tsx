@@ -9,8 +9,10 @@ import { useCakeSales } from "@/lib/store";
 import { cakeStrings as s } from "@/lib/strings";
 import {
   formatCakeAmount,
+  summarizeByCakeType,
   summarizeByMonth,
   summarizeByYear,
+  type CakeTypeSummary,
   type PeriodSummary,
 } from "@/lib/summarize";
 import { cn } from "@/lib/utils";
@@ -27,6 +29,7 @@ export default function SalesReportPage() {
   const [view, setView] = useState<View>("month");
   const monthly = useMemo(() => summarizeByMonth(sales), [sales]);
   const yearly = useMemo(() => summarizeByYear(sales), [sales]);
+  const byCakeType = useMemo(() => summarizeByCakeType(sales), [sales]);
   const periods = view === "month" ? monthly : yearly;
 
   return (
@@ -54,41 +57,109 @@ export default function SalesReportPage() {
           <p className="text-sm text-muted">{s.reportEmptyBody}</p>
         </Card>
       ) : (
-        <Card className="flex-col gap-4 p-4 shadow-sm">
-          <div className="flex items-center gap-0.5 self-start rounded-lg border border-input p-0.5">
-            {(["month", "year"] as const).map((option) => (
-              <button
-                key={option}
-                type="button"
-                aria-pressed={view === option}
-                onClick={() => setView(option)}
-                className={cn(
-                  "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
-                  view === option
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted hover:text-foreground",
-                )}
-              >
-                {option === "month" ? s.reportMonthly : s.reportYearly}
-              </button>
-            ))}
-          </div>
+        <>
+          {/* Which cake to keep making — the whole menu ranked by units
+              sold (all-time, independent of the month/year toggle below),
+              not just the single winner the header/homepage badge names. */}
+          <Card className="p-4 shadow-sm">
+            <div className="text-xs font-medium tracking-wide text-muted uppercase">
+              {s.reportByCakeType}
+            </div>
+            <ul className="mt-3 flex flex-col gap-2.5">
+              {byCakeType.map((entry, index) => (
+                <CakeTypeRow
+                  key={entry.cakeType}
+                  entry={entry}
+                  rank={index}
+                  maxQuantity={byCakeType[0].quantity}
+                />
+              ))}
+            </ul>
+          </Card>
 
-          <RevenueChart periods={periods} />
+          <Card className="flex-col gap-4 p-4 shadow-sm">
+            <div className="flex items-center gap-0.5 self-start rounded-lg border border-input p-0.5">
+              {(["month", "year"] as const).map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  aria-pressed={view === option}
+                  onClick={() => setView(option)}
+                  className={cn(
+                    "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                    view === option
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted hover:text-foreground",
+                  )}
+                >
+                  {option === "month" ? s.reportMonthly : s.reportYearly}
+                </button>
+              ))}
+            </div>
 
-          {/* Exact figures for both measures — the chart itself is
-              revenue-only (see RevenueChart) and doesn't print a value on
-              every bar, so this is where cakes-sold and precise revenue both
-              live at a glance without needing to tap each bar. Most recent
-              period first, matching the sale history on the main page. */}
-          <ul className="flex flex-col gap-2 border-t border-border/70 pt-3">
-            {[...periods].reverse().map((period) => (
-              <PeriodRow key={period.key} period={period} />
-            ))}
-          </ul>
-        </Card>
+            <RevenueChart periods={periods} />
+
+            {/* Exact figures for both measures — the chart itself is
+                revenue-only (see RevenueChart) and doesn't print a value on
+                every bar, so this is where cakes-sold and precise revenue
+                both live at a glance without needing to tap each bar. Most
+                recent period first, matching the sale history on the main
+                page. */}
+            <ul className="flex flex-col gap-2 border-t border-border/70 pt-3">
+              {[...periods].reverse().map((period) => (
+                <PeriodRow key={period.key} period={period} />
+              ))}
+            </ul>
+          </Card>
+        </>
       )}
     </div>
+  );
+}
+
+function CakeTypeRow({
+  entry,
+  rank,
+  maxQuantity,
+}: {
+  entry: CakeTypeSummary;
+  rank: number;
+  maxQuantity: number;
+}) {
+  // Bar length relative to the top seller's quantity (not a percent-of-total
+  // split like the expense category bars) — the question this card answers
+  // is "which cake wins", so #1 reads as a full bar and everyone else
+  // visibly trails it, rather than every bar summing to a whole.
+  const pct = maxQuantity > 0 ? (entry.quantity / maxQuantity) * 100 : 0;
+  return (
+    <li className="flex flex-col gap-1">
+      <div className="flex items-center justify-between text-sm">
+        <span className="flex min-w-0 items-center gap-1.5 text-foreground/80">
+          {rank === 0 ? (
+            <TrophyIcon className="size-3.5 shrink-0 text-primary" aria-hidden />
+          ) : (
+            <span className="w-3.5 shrink-0 text-center text-xs tabular-nums text-muted">
+              {rank + 1}
+            </span>
+          )}
+          <span className="truncate">{entry.cakeType}</span>
+        </span>
+        <span className="flex shrink-0 items-baseline gap-2">
+          <span className="text-xs text-muted">
+            {s.cakesCount(entry.quantity)}
+          </span>
+          <span className="font-medium tabular-nums" dir="ltr">
+            {formatCakeAmount(entry.revenue)}
+          </span>
+        </span>
+      </div>
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-border/70">
+        <div
+          className="h-full rounded-full bg-primary transition-all"
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+    </li>
   );
 }
 
