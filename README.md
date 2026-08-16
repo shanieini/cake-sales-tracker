@@ -67,35 +67,52 @@ because as far as the OS is concerned it now is one.
   `ImageResponse`, so the favicon and the installed-app icon are guaranteed
   to match the mark used inside the app itself.
 
-### The three pages
+### The five pages
 
 - **`/`** (`CakeTracker.tsx`) — a "Log a sale" button, four revenue stat
   cards (today / last 7 days / this month / all-time, with "today" as a
-  solid-fill hero tile), a best-seller callout, rows linking to the report
-  and expenses pages, and the sale history grouped by day.
-- **`/report`** (`SalesReportPage.tsx`) — a month↔year toggle, a
-  revenue-by-period bar chart (`RevenueChart.tsx`, built on
-  [Recharts](https://recharts.org) — real hover/tap tooltips, not
-  hand-rolled `<div>` bars), and an exact-numbers list underneath (revenue,
-  cakes sold, and that period's own best seller). The chart is
-  deliberately revenue-only: cakes-sold is a second, differently-scaled
-  measure, and a chart never gets a second y-axis for that — count rides
-  along in the tooltip and the list instead. Kept `dir="ltr"` even on this
-  RTL page, the same convention as money amounts: a chart is a widget people
-  expect to read left-to-right regardless of surrounding text direction.
+  solid-fill hero tile), a best-seller callout, rows linking to the other
+  four pages, and the sale history grouped by day.
+- **`/report`** (`SalesReportPage.tsx`) — a cake-type breakdown card (every
+  cake ranked by units sold, with a period picker scoping it to all time or
+  one specific month/year), a month↔year toggle, a revenue-by-period bar
+  chart (`RevenueChart.tsx`, built on [Recharts](https://recharts.org) —
+  real hover/tap tooltips, not hand-rolled `<div>` bars), and an
+  exact-numbers list underneath (revenue, cakes sold, and that period's own
+  best seller). The chart is deliberately revenue-only: cakes-sold is a
+  second, differently-scaled measure, and a chart never gets a second
+  y-axis for that — count rides along in the tooltip and the list instead.
+  Kept `dir="ltr"` even on this RTL page, the same convention as money
+  amounts: a chart is a widget people expect to read left-to-right
+  regardless of surrounding text direction.
 - **`/expenses`** (`ExpenseTracker.tsx`) — the spend-tracking counterpart:
   a "Log expense" button, the same four-stat-card shape (spend instead of
   revenue), a category breakdown (7 fixed categories — ingredients,
   packaging, equipment, delivery, marketing, rent, other — since a bakery's
   cost categories don't vary the way its menu does, so there's a picker but
   no manager UI for them), and a day-grouped history.
+- **`/cakes`** (`CakeTypesPage.tsx`) — every cake type with its price, the
+  read-focused counterpart to `ManageCakeTypesSheet.tsx` (which stays as a
+  quick add/delete popup reachable mid-flow, e.g. from the sale form's
+  empty-catalog prompt). The only place that supports editing a price once
+  set, via `AddCakeTypeSheet.tsx` and `updateCakeType` in the store.
+- **`/profit`** (`ProfitPage.tsx`) — revenue minus expenses, by month/year:
+  the same four-stat-card shape (net instead of revenue or spend, colored
+  red when negative), a `ProfitChart.tsx` bar chart colored per bar by sign
+  (the app's `--destructive` red for a losing period, `--primary` for a
+  profitable one, rather than one fixed color), and a period list with the
+  revenue/expenses breakdown under each net figure. Deliberately
+  month/year rather than apportioned across individual cakes — splitting
+  shared costs like rent per cake felt arbitrary without more product
+  signal.
 
 ### The sale form (`AddSaleSheet.tsx`)
 
 Cake type is a real dropdown (`Select`, base-ui) listing only cake types
-already in the catalog (managed via `ManageCakeTypesSheet.tsx` — add a type
-with a **required** price, delete one, duplicate names blocked) — not free
-text, so there's no typo risk. Picking a type always fills in its price. If
+already in the catalog (managed via `ManageCakeTypesSheet.tsx` for quick
+add/delete, or the `/cakes` page for the full list plus editing a price —
+both require a price, block duplicate names) — not free text, so there's
+no typo risk. Picking a type always fills in its price. If
 the catalog is empty, the dropdown is replaced by a prompt with a button
 straight to the cake-type manager, and the submit button is disabled — no
 dead-end empty dropdown. Editing an old sale whose cake type was since
@@ -128,22 +145,15 @@ here).
 
 ## Ideas for next features
 
-- **Profit** = revenue − expenses. Not built: revenue lives per sale,
-  expenses aren't linked to a sale or a cake type, and it's not obvious a
-  baker wants "profit" broken down the same way as "revenue" (by month? by
-  cake type, apportioning shared costs like rent somehow?) without asking
-  first.
 - Multiple currencies — right now everything is a fixed `₪`
   (`CAKE_CURRENCY` in `src/lib/strings.ts`).
 - Sync across devices — would need real accounts and a backend (e.g.
   Supabase auth + tables for sales/cake types/expenses with row-level
   security), which this app deliberately doesn't have yet.
 - Customer/order tracking: who ordered what, and a pickup date.
-- Editing a cake type's default price from the manage-cakes list instead of
-  only deleting and re-adding it (`updateCakeType` already exists in the
-  store for this — just no UI wired to it yet).
-- A monthly/yearly report for expenses too, mirroring `/report` — the
-  pattern (`summarizeByPeriod`, `RevenueChart`) is already there to extend.
+- A monthly/yearly report for expenses alone, mirroring `/report`'s
+  cake-type breakdown but by expense category — `/profit` covers the
+  combined revenue-vs-expenses view, not a category-over-time chart.
 - An explicit light/dark/system theme toggle (currently OS-only, no
   settings page exists yet to put one on).
 - Offline caching via a service worker — the app can be installed (see

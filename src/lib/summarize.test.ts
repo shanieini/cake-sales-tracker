@@ -10,6 +10,8 @@ import {
   summarizeByYear,
   summarizeCakeExpenses,
   summarizeCakeSales,
+  summarizeProfitByMonth,
+  summarizeProfitByYear,
   toIsoDate,
 } from "./summarize";
 import type { CakeExpense, CakeSale } from "./types";
@@ -252,6 +254,52 @@ describe("summarizeByCakeType", () => {
     expect(summarizeByCakeType(sales)).toEqual([
       { cakeType: "Lemon cake", quantity: 5, revenue: 50 },
       { cakeType: "Chocolate cake", quantity: 4, revenue: 80 },
+    ]);
+  });
+});
+
+describe("summarizeProfitByMonth", () => {
+  it("returns an empty array for no sales and no expenses", () => {
+    expect(summarizeProfitByMonth([], [])).toEqual([]);
+  });
+
+  it("nets revenue against expenses within the same month", () => {
+    const sales = [makeSale({ date: "2026-08-02", quantity: 2, pricePerUnit: 20 })];
+    const expenses = [makeExpense({ date: "2026-08-10", amount: 15 })];
+    const months = summarizeProfitByMonth(sales, expenses);
+    expect(months).toEqual([
+      { key: "2026-08", label: expect.any(String), revenue: 40, expenses: 15, net: 25 },
+    ]);
+  });
+
+  it("includes an expense-only month with a negative net, not a gap", () => {
+    const expenses = [makeExpense({ date: "2026-07-01", amount: 40 })];
+    const months = summarizeProfitByMonth([], expenses);
+    expect(months).toHaveLength(1);
+    expect(months[0]).toMatchObject({ key: "2026-07", revenue: 0, expenses: 40, net: -40 });
+  });
+
+  it("keeps different months separate, oldest first", () => {
+    const sales = [
+      makeSale({ date: "2026-08-01", quantity: 1, pricePerUnit: 10 }),
+      makeSale({ date: "2026-06-01", quantity: 1, pricePerUnit: 10 }),
+    ];
+    const months = summarizeProfitByMonth(sales, []);
+    expect(months.map((m) => m.key)).toEqual(["2026-06", "2026-08"]);
+  });
+});
+
+describe("summarizeProfitByYear", () => {
+  it("returns an empty array for no sales and no expenses", () => {
+    expect(summarizeProfitByYear([], [])).toEqual([]);
+  });
+
+  it("nets revenue against expenses within the same year", () => {
+    const sales = [makeSale({ date: "2026-03-01", quantity: 3, pricePerUnit: 10 })];
+    const expenses = [makeExpense({ date: "2026-11-01", amount: 12 })];
+    const years = summarizeProfitByYear(sales, expenses);
+    expect(years).toEqual([
+      { key: "2026", label: "2026", revenue: 30, expenses: 12, net: 18 },
     ]);
   });
 });
