@@ -57,11 +57,13 @@ export default function CakeTracker() {
   const [manageOpen, setManageOpen] = useState(false);
 
   // Bumped on every open (not just when the target changes) and passed to
-  // AddSaleSheet as its `key` below — forces a full remount each time,
-  // resetting its internal cake-type/price state instead of carrying over
-  // whatever the previous open (a different sale, or none) left behind. See
-  // AddSaleSheet's own comment for why that state can't safely survive a
-  // still-mounted reuse.
+  // AddSaleSheet as `formKey`, which it uses to remount only its inner form
+  // — not the Drawer/Dialog chrome itself — each time. That resets the
+  // form's cake-type/price state instead of carrying over whatever the
+  // previous open (a different sale, or none) left behind, without
+  // disturbing the sheet's own open/close animation. See AddSaleSheet's
+  // comment for why keying the whole sheet (an earlier version of this
+  // fix) broke that animation instead.
   const [sheetSession, setSheetSession] = useState(0);
   function openSaleSheet(editing: CakeSale | null) {
     setSheetSession((session) => session + 1);
@@ -158,7 +160,7 @@ export default function CakeTracker() {
       </div>
 
       <AddSaleSheet
-        key={sheetSession}
+        formKey={sheetSession}
         open={sheet.open}
         editing={sheet.editing}
         cakeTypes={cakeTypes}

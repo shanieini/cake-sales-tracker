@@ -35,6 +35,10 @@ type Props = {
   open: boolean;
   editing: CakeSale | null;
   cakeTypes: CakeType[];
+  /** Bumped by CakeTracker on every open (a session counter, not tied to
+   * which sale it is) and used to `key` `SaleForm` below — see that
+   * component's comment for why. */
+  formKey: number;
   onOpenChange: (open: boolean) => void;
   onSave: (input: CakeSaleInput) => void;
   /** Jumps to the cake-type catalog — used by the empty-state prompt below,
@@ -42,36 +46,100 @@ type Props = {
   onManageCakeTypes: () => void;
 };
 
+/**
+ * Just the responsive Dialog/Drawer chrome — deliberately holds no state of
+ * its own and is never given a `key`, so it's one persisting instance for
+ * the app's whole lifetime, the same as every other add/edit sheet. That's
+ * what makes its open/close transition animate smoothly: Base UI's
+ * enter/exit CSS transitions key off this Drawer/Dialog's own `open` prop
+ * flipping across two separate renders (closed, then open) — remount it
+ * fresh already-open (as this component itself used to be, see git
+ * history) and the browser never gets to paint the "closed" starting style
+ * first, so the entrance transition can flicker or get skipped entirely.
+ * `SaleForm` — not this wrapper — is what gets a fresh `key` per open, so
+ * only its state resets, not the chrome around it.
+ */
 export default function AddSaleSheet({
   open,
+  editing,
+  cakeTypes,
+  formKey,
+  onOpenChange,
+  onSave,
+  onManageCakeTypes,
+}: Props) {
+  const isDesktop = useIsDesktop();
+  const title = editing ? s.editSale : s.logSale;
+
+  const form = (
+    <SaleForm
+      key={formKey}
+      editing={editing}
+      cakeTypes={cakeTypes}
+      onOpenChange={onOpenChange}
+      onSave={onSave}
+      onManageCakeTypes={onManageCakeTypes}
+    />
+  );
+
+  if (isDesktop) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{title}</DialogTitle>
+          </DialogHeader>
+          {form}
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  return (
+    <Drawer open={open} onOpenChange={onOpenChange} showSwipeHandle>
+      <DrawerContent>
+        <DrawerHeader>
+          <DrawerTitle>{title}</DrawerTitle>
+        </DrawerHeader>
+        <div className="max-h-[80vh] overflow-y-auto p-4 pt-2">{form}</div>
+      </DrawerContent>
+    </Drawer>
+  );
+}
+
+type SaleFormProps = Pick<
+  Props,
+  "editing" | "cakeTypes" | "onOpenChange" | "onSave" | "onManageCakeTypes"
+>;
+
+/**
+ * The actual form — split out from `AddSaleSheet` so it (not the Drawer/
+ * Dialog wrapping it) is what gets remounted on every open, via the `key`
+ * its caller sets above.
+ *
+ * `cakeTypeName`/`price` are controlled React state seeded once via
+ * `useState(editing?...)` — that initializer only runs on mount, so
+ * without the remount, switching which sale is being edited would leave
+ * the previous sale's cake type and price sitting in the form: looking
+ * like valid input for the *new* target and silently overwriting it on
+ * save (a real bug this app had). The uncontrolled fields below (quantity,
+ * date, note) don't strictly need the remount for the same reason — their
+ * initial values live in the DOM via `defaultValue`, not in this
+ * component's state — but they get it for free either way now.
+ */
+function SaleForm({
   editing,
   cakeTypes,
   onOpenChange,
   onSave,
   onManageCakeTypes,
-}: Props) {
+}: SaleFormProps) {
   const isDesktop = useIsDesktop();
   const [error, setError] = useState<string | null>(null);
   const [cakeTypeName, setCakeTypeName] = useState(editing?.cakeType ?? "");
   const [price, setPrice] = useState(
     editing ? String(editing.pricePerUnit) : "",
   );
-
-  // `cakeTypeName`/`price`/`error` are only ever correct because CakeTracker
-  // gives this whole component a fresh `key` on every open (see its call
-  // site) — that's what makes AddSaleSheet itself remount, resetting these
-  // `useState` initializers to run again for the new target. Without that
-  // key, this component doesn't unmount between sheet opens (CakeTracker
-  // would otherwise render one long-lived instance, only toggling `open`/
-  // `editing`), and switching which sale is being edited would leave the
-  // previous sale's cake type and price sitting in the form — looking like
-  // valid input for the *new* target and silently overwriting it on save.
-  // The uncontrolled fields below (quantity, date, note) don't depend on
-  // this: their `key={editing?.id ?? "new"}` form-level remount would reset
-  // them either way, since their initial values live in the DOM, not in
-  // this component's state — but a lower-level key can't reset state
-  // declared *above* it (in this component itself), which is exactly the
-  // bug that left cakeTypeName/price stale before.
 
   // The catalog, plus — only when editing a sale whose cake type was since
   // deleted from it — a stand-in entry so the dropdown still shows and keeps
@@ -89,8 +157,8 @@ export default function AddSaleSheet({
   // (rather than leaving it) when the newly picked type has no price of its
   // own — the deleted-cake-type stand-in in `selectableTypes` is one way to
   // hit this, and a previously-picked type's price is exactly the kind of
-  // stale, still-looks-valid number this page's own edit-state bug (see the
-  // effect above) was caught by leaving behind.
+  // stale, still-looks-valid number this form's own remount-per-open exists
+  // to avoid leaving behind.
   function handleSelectCakeType(name: string | null) {
     setCakeTypeName(name ?? "");
     const match = cakeTypes.find((type) => type.name === name);
@@ -130,17 +198,10 @@ export default function AddSaleSheet({
     onOpenChange(false);
   }
 
-  const title = editing ? s.editSale : s.logSale;
   const submitLabel = editing ? s.saveChanges : s.addSale;
 
-  const form = (
-    // Keyed by the edited row (or "new") so defaults re-initialise when the
-    // target changes.
-    <form
-      key={editing?.id ?? "new"}
-      onSubmit={handleSubmit}
-      className="flex flex-col gap-3"
-    >
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col gap-3">
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="cakeType">{s.cakeType}</Label>
         {selectableTypes.length === 0 ? (
@@ -239,29 +300,5 @@ export default function AddSaleSheet({
         </Button>
       </div>
     </form>
-  );
-
-  if (isDesktop) {
-    return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{title}</DialogTitle>
-          </DialogHeader>
-          {form}
-        </DialogContent>
-      </Dialog>
-    );
-  }
-
-  return (
-    <Drawer open={open} onOpenChange={onOpenChange} showSwipeHandle>
-      <DrawerContent>
-        <DrawerHeader>
-          <DrawerTitle>{title}</DrawerTitle>
-        </DrawerHeader>
-        <div className="max-h-[80vh] overflow-y-auto p-4 pt-2">{form}</div>
-      </DrawerContent>
-    </Drawer>
   );
 }

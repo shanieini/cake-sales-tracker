@@ -22,49 +22,50 @@ function makeSale(overrides: Partial<CakeSale> = {}): CakeSale {
   };
 }
 
-function renderSheet(
-  props: Partial<React.ComponentProps<typeof AddSaleSheet>> & { key?: string } = {},
-) {
-  const { key, ...rest } = props;
+function renderSheet(props: Partial<React.ComponentProps<typeof AddSaleSheet>> = {}) {
   return render(
     <AddSaleSheet
-      key={key}
+      formKey={0}
       open={true}
       editing={null}
       cakeTypes={cakeTypes}
       onOpenChange={() => {}}
       onSave={() => {}}
       onManageCakeTypes={() => {}}
-      {...rest}
+      {...props}
     />,
   );
 }
 
 describe("AddSaleSheet", () => {
-  // AddSaleSheet's own cakeTypeName/price state only ever starts correct
-  // because CakeTracker gives it a fresh `key` on every open (see
-  // CakeTracker's `openSaleSheet`) — that's the actual fix for a real bug:
-  // without a key change, this component doesn't unmount between sheet
-  // opens, so switching which sale is being edited left the previous
-  // sale's cake type and price sitting in the form, looking like valid
-  // input for the new target and silently overwriting it on save. This
-  // test exercises AddSaleSheet's half of that contract — that a fresh
-  // mount always reflects its own `editing` prop correctly, never a
-  // previous instance's leftover state.
-  it("shows the sale being edited, not a previous mount's leftover values, once given a fresh key", () => {
+  // Regression test for two things at once, both from the same fix:
+  // 1. (a real bug) SaleForm's cakeTypeName/price are controlled state
+  //    seeded once via useState(editing?...) — without a fresh mount per
+  //    open, switching which sale is being edited left the previous
+  //    sale's cake type and price sitting in the form, looking like valid
+  //    input for the new target and silently overwriting it on save.
+  // 2. (a regression an earlier version of this fix introduced) keying
+  //    the *whole* AddSaleSheet — Drawer/Dialog chrome included — to force
+  //    that remount broke the sheet's open/close animation, since a fresh
+  //    Drawer instance mounts already-open in one commit instead of
+  //    transitioning from closed to open across two. `formKey` only
+  //    remounts the inner SaleForm now, so the Drawer/Dialog DOM node
+  //    itself should be the exact same node across a formKey change.
+  it("resets the form on a formKey bump without remounting the Drawer around it", () => {
     const saleA = makeSale({ id: "a", cakeType: "Chocolate cake", pricePerUnit: 20 });
     const saleB = makeSale({ id: "b", cakeType: "Lemon cake", pricePerUnit: 8 });
 
-    const { rerender } = renderSheet({ key: "a", editing: saleA });
+    const { rerender } = renderSheet({ formKey: 1, editing: saleA });
     expect(screen.getByText("Chocolate cake")).toBeInTheDocument();
     expect(screen.getByLabelText("מחיר ליחידה")).toHaveValue(20);
+    const drawerBefore = document.querySelector('[data-slot="drawer-popup"]');
+    expect(drawerBefore).not.toBeNull();
 
-    // A different `key`, exactly like CakeTracker bumping its session
-    // counter on every open — React tears down the old instance and
-    // mounts a fresh one instead of reusing it with new props.
+    // A different `formKey`, exactly like CakeTracker bumping its session
+    // counter on every open.
     rerender(
       <AddSaleSheet
-        key="b"
+        formKey={2}
         open={true}
         editing={saleB}
         cakeTypes={cakeTypes}
@@ -74,6 +75,9 @@ describe("AddSaleSheet", () => {
       />,
     );
 
+    // Same Drawer DOM node — not torn down and recreated.
+    expect(document.querySelector('[data-slot="drawer-popup"]')).toBe(drawerBefore);
+    // But the form inside it reflects the new sale, not the old one.
     expect(screen.getByText("Lemon cake")).toBeInTheDocument();
     expect(screen.queryByText("Chocolate cake")).not.toBeInTheDocument();
     expect(screen.getByLabelText("מחיר ליחידה")).toHaveValue(8);
