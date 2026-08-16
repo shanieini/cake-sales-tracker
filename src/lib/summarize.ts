@@ -277,6 +277,88 @@ export function summarizeByCakeType(sales: CakeSale[]): CakeTypeSummary[] {
     .sort((a, b) => b.quantity - a.quantity);
 }
 
+export type ProfitPeriodSummary = {
+  /** `"2026-08"` for a month, `"2026"` for a year — same convention as
+   * `PeriodSummary.key`. */
+  key: string;
+  label: string;
+  revenue: number;
+  expenses: number;
+  /** `revenue - expenses`. Can be negative — a month can cost more than it
+   * brought in, and that's exactly the case this page exists to surface. */
+  net: number;
+};
+
+/**
+ * Net profit per period — revenue and expenses matched up by the same
+ * period key and subtracted, month-by-month or year-by-year rather than
+ * apportioning shared costs (rent, equipment) across individual cakes,
+ * which the README flags as the open question that kept this feature
+ * unbuilt until it was actually asked for. A period appears here if it has
+ * *either* a sale or an expense, not just sales like `summarizeByPeriod` —
+ * an expense-only month (bought flour, sold nothing yet) is a real month
+ * with a real (negative) net, not a gap.
+ */
+function summarizeProfitByPeriod(
+  sales: CakeSale[],
+  expenses: CakeExpense[],
+  keyOf: (isoDate: string) => string,
+  labelOf: (key: string) => string,
+): ProfitPeriodSummary[] {
+  const byKey = new Map<string, { revenue: number; expenses: number }>();
+
+  for (const sale of sales) {
+    const key = keyOf(sale.date);
+    const entry = byKey.get(key) ?? { revenue: 0, expenses: 0 };
+    entry.revenue += saleTotal(sale);
+    byKey.set(key, entry);
+  }
+  for (const expense of expenses) {
+    const key = keyOf(expense.date);
+    const entry = byKey.get(key) ?? { revenue: 0, expenses: 0 };
+    entry.expenses += expense.amount;
+    byKey.set(key, entry);
+  }
+
+  return [...byKey.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, { revenue, expenses: expenseTotal }]) => ({
+      key,
+      label: labelOf(key),
+      revenue: round2(revenue),
+      expenses: round2(expenseTotal),
+      net: round2(revenue - expenseTotal),
+    }));
+}
+
+/** Net profit, one entry per calendar month with at least one sale or
+ * expense, oldest first. */
+export function summarizeProfitByMonth(
+  sales: CakeSale[],
+  expenses: CakeExpense[],
+): ProfitPeriodSummary[] {
+  return summarizeProfitByPeriod(
+    sales,
+    expenses,
+    (isoDate) => isoDate.slice(0, 7),
+    (key) => formatMonthLabel(key),
+  );
+}
+
+/** Net profit, one entry per calendar year with at least one sale or
+ * expense, oldest first. */
+export function summarizeProfitByYear(
+  sales: CakeSale[],
+  expenses: CakeExpense[],
+): ProfitPeriodSummary[] {
+  return summarizeProfitByPeriod(
+    sales,
+    expenses,
+    (isoDate) => isoDate.slice(0, 4),
+    (key) => key,
+  );
+}
+
 export type ExpenseSummary = {
   todayTotal: number;
   weekTotal: number;

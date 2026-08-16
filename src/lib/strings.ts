@@ -84,6 +84,13 @@ export const cakeStrings = {
   expensesEmptyBody:
     "עדיין לא נרשמו הוצאות. הקישו על ”רישום הוצאה” אחרי הקנייה הבאה.",
   expensesByCategory: "לפי קטגוריה",
+  profitNavTitle: "רווח נטו",
+  profitPageTitle: "רווח נטו",
+  profitPageSubtitle: "הכנסות פחות הוצאות, לפי חודשים ושנים",
+  profitEmptyBody:
+    "ברגע שתירשמו מכירות או הוצאות, יופיע כאן דוח רווח לפי חודשים ושנים.",
+  netLabel: "נטו",
+  revenueLabel: "הכנסות",
   loginTitle: "התחברות",
   loginSubtitle: "היכנסו כדי לראות את הנתונים שלכם",
   username: "שם משתמש",
