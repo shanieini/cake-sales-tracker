@@ -17,6 +17,7 @@ import AddExpenseSheet from "@/components/AddExpenseSheet";
 import ExpenseCategoryBadge from "@/components/ExpenseCategoryBadge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { useToday } from "@/hooks/use-today";
 import { EXPENSE_CATEGORY_META } from "@/lib/expense-categories";
 import {
   addCakeExpense,
@@ -60,7 +61,14 @@ export default function ExpenseTracker() {
     editing: CakeExpense | null;
   }>({ open: false, editing: null });
 
-  const summary = useMemo(() => summarizeCakeExpenses(expenses), [expenses]);
+  // Re-derived on focus/visibility, not just on `expenses` changing — see
+  // useToday — so "today"/"this week"/"this month" don't stay pinned to
+  // yesterday if the app was left open across midnight.
+  const today = useToday();
+  const summary = useMemo(
+    () => summarizeCakeExpenses(expenses, today),
+    [expenses, today],
+  );
   const groups = useMemo(() => groupExpensesByDay(expenses), [expenses]);
 
   function handleSave(input: CakeExpenseInput) {

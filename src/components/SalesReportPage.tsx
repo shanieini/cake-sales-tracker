@@ -44,11 +44,27 @@ export default function SalesReportPage() {
   // ("2026-08") and a year key ("2026") aren't the same namespace, so a
   // stale one would silently match nothing.
   const [cakeTypePeriod, setCakeTypePeriod] = useState("all");
+  // Falls back to "all" if the stored key no longer names a real period —
+  // e.g. every sale in the selected month got deleted (possible from
+  // another tab: store.ts explicitly syncs across tabs) since it was
+  // picked. Without this, the picker would render the raw, untranslated
+  // key ("2026-07") instead of a label, and the breakdown below would go
+  // silently empty instead of falling back to the full picture.
+  const effectiveCakeTypePeriod = useMemo(
+    () =>
+      cakeTypePeriod === "all" ||
+      periods.some((period) => period.key === cakeTypePeriod)
+        ? cakeTypePeriod
+        : "all",
+    [cakeTypePeriod, periods],
+  );
   const cakeTypeSales = useMemo(() => {
-    if (cakeTypePeriod === "all") return sales;
+    if (effectiveCakeTypePeriod === "all") return sales;
     const keyLength = view === "month" ? 7 : 4;
-    return sales.filter((sale) => sale.date.slice(0, keyLength) === cakeTypePeriod);
-  }, [sales, cakeTypePeriod, view]);
+    return sales.filter(
+      (sale) => sale.date.slice(0, keyLength) === effectiveCakeTypePeriod,
+    );
+  }, [sales, effectiveCakeTypePeriod, view]);
   const byCakeType = useMemo(
     () => summarizeByCakeType(cakeTypeSales),
     [cakeTypeSales],
@@ -91,7 +107,7 @@ export default function SalesReportPage() {
                 {s.reportByCakeType}
               </div>
               <Select
-                value={cakeTypePeriod}
+                value={effectiveCakeTypePeriod}
                 onValueChange={(value) => setCakeTypePeriod(value ?? "all")}
               >
                 <SelectTrigger size="sm" className="h-7 text-xs">

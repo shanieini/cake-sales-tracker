@@ -24,6 +24,7 @@ import CakeLogo from "@/components/CakeLogo";
 import ManageCakeTypesSheet from "@/components/ManageCakeTypesSheet";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { useToday } from "@/hooks/use-today";
 import { logout } from "@/lib/auth";
 import {
   addCakeSale,
@@ -55,7 +56,23 @@ export default function CakeTracker() {
   }>({ open: false, editing: null });
   const [manageOpen, setManageOpen] = useState(false);
 
-  const summary = useMemo(() => summarizeCakeSales(sales), [sales]);
+  // Bumped on every open (not just when the target changes) and passed to
+  // AddSaleSheet as its `key` below — forces a full remount each time,
+  // resetting its internal cake-type/price state instead of carrying over
+  // whatever the previous open (a different sale, or none) left behind. See
+  // AddSaleSheet's own comment for why that state can't safely survive a
+  // still-mounted reuse.
+  const [sheetSession, setSheetSession] = useState(0);
+  function openSaleSheet(editing: CakeSale | null) {
+    setSheetSession((session) => session + 1);
+    setSheet({ open: true, editing });
+  }
+
+  // Re-derived on focus/visibility (see the hook), not just on `sales`
+  // changing, so "today"/"this week"/"this month" don't stay pinned to
+  // yesterday if the app was left open (backgrounded) across midnight.
+  const today = useToday();
+  const summary = useMemo(() => summarizeCakeSales(sales, today), [sales, today]);
   const groups = useMemo(() => groupSalesByDay(sales), [sales]);
 
   function handleSave(input: CakeSaleInput) {
@@ -120,7 +137,7 @@ export default function CakeTracker() {
       <div className="flex items-center gap-2">
         <Button
           type="button"
-          onClick={() => setSheet({ open: true, editing: null })}
+          onClick={() => openSaleSheet(null)}
           className="h-12 flex-1 gap-2"
         >
           <PlusIcon className="size-4" />
@@ -141,6 +158,7 @@ export default function CakeTracker() {
       </div>
 
       <AddSaleSheet
+        key={sheetSession}
         open={sheet.open}
         editing={sheet.editing}
         cakeTypes={cakeTypes}
@@ -278,9 +296,7 @@ export default function CakeTracker() {
                             variant="outline"
                             size="icon-sm"
                             aria-label={s.editSaleAria}
-                            onClick={() =>
-                              setSheet({ open: true, editing: sale })
-                            }
+                            onClick={() => openSaleSheet(sale)}
                           >
                             <SquarePenIcon className="size-3.5" />
                           </Button>

@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useCakeTypes, type CakeTypeInput } from "@/lib/store";
 import { cakeStrings as s } from "@/lib/strings";
+import { validateCakeTypeInput } from "@/lib/validate-cake-type";
 import type { CakeType } from "@/lib/types";
 
 type Props = {
@@ -48,25 +49,16 @@ export default function AddCakeTypeSheet({
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    const name = String(data.get("name") ?? "").trim();
-    const priceRaw = String(data.get("defaultPrice") ?? "").trim();
-    const defaultPrice = Number(priceRaw);
+    const name = String(data.get("name") ?? "");
+    const priceRaw = String(data.get("defaultPrice") ?? "");
 
-    if (!name) return setError(s.errorCakeTypeName);
     // Excludes the row being edited, so saving a cake type without changing
     // its name doesn't flag itself as a duplicate of itself.
-    const isDuplicate = cakeTypes.some(
-      (type) =>
-        type.id !== editing?.id &&
-        type.name.toLowerCase() === name.toLowerCase(),
-    );
-    if (isDuplicate) return setError(s.duplicateCakeType);
-    if (!priceRaw || !Number.isFinite(defaultPrice) || defaultPrice < 0) {
-      return setError(s.errorDefaultPrice);
-    }
+    const result = validateCakeTypeInput(name, priceRaw, cakeTypes, editing?.id);
+    if (!result.ok) return setError(result.error);
 
     setError(null);
-    onSave({ name, defaultPrice });
+    onSave(result.input);
     onOpenChange(false);
   }
 

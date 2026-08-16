@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { addCakeType, deleteCakeType, useCakeTypes } from "@/lib/store";
 import { cakeStrings as s } from "@/lib/strings";
 import { formatCakeAmount } from "@/lib/summarize";
+import { validateCakeTypeInput } from "@/lib/validate-cake-type";
 
 type Props = {
   open: boolean;
@@ -34,23 +35,14 @@ export default function ManageCakeTypesSheet({ open, onOpenChange }: Props) {
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    const name = String(data.get("name") ?? "").trim();
-    const priceRaw = String(data.get("defaultPrice") ?? "").trim();
-    const defaultPrice = Number(priceRaw);
+    const name = String(data.get("name") ?? "");
+    const priceRaw = String(data.get("defaultPrice") ?? "");
 
-    if (!name) return setError(s.errorCakeTypeName);
-    const isDuplicate = cakeTypes.some(
-      (type) => type.name.toLowerCase() === name.toLowerCase(),
-    );
-    if (isDuplicate) return setError(s.duplicateCakeType);
-    // Required, not optional: the sale form's price field only autofills
-    // when the picked cake type actually has a price to fill it with.
-    if (!priceRaw || !Number.isFinite(defaultPrice) || defaultPrice < 0) {
-      return setError(s.errorDefaultPrice);
-    }
+    const result = validateCakeTypeInput(name, priceRaw, cakeTypes);
+    if (!result.ok) return setError(result.error);
 
     setError(null);
-    addCakeType({ name, defaultPrice });
+    addCakeType(result.input);
     event.currentTarget.reset();
   }
 

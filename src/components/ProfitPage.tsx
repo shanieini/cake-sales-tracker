@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import ProfitChart from "@/components/ProfitChart";
 import { Card } from "@/components/ui/card";
+import { useToday } from "@/hooks/use-today";
 import { useCakeExpenses, useCakeSales } from "@/lib/store";
 import { cakeStrings as s } from "@/lib/strings";
 import {
@@ -38,10 +39,19 @@ export default function ProfitPage() {
   const expenses = useCakeExpenses();
   const [view, setView] = useState<View>("month");
 
-  const salesSummary = useMemo(() => summarizeCakeSales(sales), [sales]);
+  // Re-derived on focus/visibility, not just on sales/expenses changing —
+  // see useToday — so the today/week/month KPI cards don't stay pinned to
+  // yesterday if the app was left open across midnight. Doesn't affect
+  // monthly/yearly below: those aggregate every period there is, with no
+  // "today" concept to go stale.
+  const today = useToday();
+  const salesSummary = useMemo(
+    () => summarizeCakeSales(sales, today),
+    [sales, today],
+  );
   const expensesSummary = useMemo(
-    () => summarizeCakeExpenses(expenses),
-    [expenses],
+    () => summarizeCakeExpenses(expenses, today),
+    [expenses, today],
   );
   const monthly = useMemo(
     () => summarizeProfitByMonth(sales, expenses),
