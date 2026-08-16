@@ -57,6 +57,22 @@ export default function AddSaleSheet({
     editing ? String(editing.pricePerUnit) : "",
   );
 
+  // `cakeTypeName`/`price`/`error` are only ever correct because CakeTracker
+  // gives this whole component a fresh `key` on every open (see its call
+  // site) — that's what makes AddSaleSheet itself remount, resetting these
+  // `useState` initializers to run again for the new target. Without that
+  // key, this component doesn't unmount between sheet opens (CakeTracker
+  // would otherwise render one long-lived instance, only toggling `open`/
+  // `editing`), and switching which sale is being edited would leave the
+  // previous sale's cake type and price sitting in the form — looking like
+  // valid input for the *new* target and silently overwriting it on save.
+  // The uncontrolled fields below (quantity, date, note) don't depend on
+  // this: their `key={editing?.id ?? "new"}` form-level remount would reset
+  // them either way, since their initial values live in the DOM, not in
+  // this component's state — but a lower-level key can't reset state
+  // declared *above* it (in this component itself), which is exactly the
+  // bug that left cakeTypeName/price stale before.
+
   // The catalog, plus — only when editing a sale whose cake type was since
   // deleted from it — a stand-in entry so the dropdown still shows and keeps
   // that original name instead of silently blanking it out.
@@ -69,11 +85,16 @@ export default function AddSaleSheet({
 
   // Picking a cake type always fills in its price — a deliberate, one-time
   // choice from a dropdown, not a keystroke, so there's no reason to hold
-  // back the way free-text typing would have needed to.
+  // back the way free-text typing would have needed to. Clears the field
+  // (rather than leaving it) when the newly picked type has no price of its
+  // own — the deleted-cake-type stand-in in `selectableTypes` is one way to
+  // hit this, and a previously-picked type's price is exactly the kind of
+  // stale, still-looks-valid number this page's own edit-state bug (see the
+  // effect above) was caught by leaving behind.
   function handleSelectCakeType(name: string | null) {
     setCakeTypeName(name ?? "");
     const match = cakeTypes.find((type) => type.name === name);
-    if (match?.defaultPrice !== undefined) setPrice(String(match.defaultPrice));
+    setPrice(match?.defaultPrice !== undefined ? String(match.defaultPrice) : "");
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -88,7 +109,12 @@ export default function AddSaleSheet({
     if (!Number.isFinite(quantity) || quantity <= 0) {
       return setError(s.errorQuantity);
     }
-    if (!Number.isFinite(pricePerUnit) || pricePerUnit < 0) {
+    // `!price.trim()` first: `Number("")` is `0`, which is otherwise a
+    // perfectly valid (free/complimentary sale) price, so a blank field
+    // would silently save as ₪0 instead of being flagged as unfilled —
+    // same required-field treatment `validateCakeTypeInput` already gives
+    // a cake type's own price.
+    if (!price.trim() || !Number.isFinite(pricePerUnit) || pricePerUnit < 0) {
       return setError(s.errorPrice);
     }
     if (!date) return setError(s.errorDate);
