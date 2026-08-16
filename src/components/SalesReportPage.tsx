@@ -5,6 +5,13 @@ import Link from "next/link";
 import { ArrowRightIcon, BarChart3Icon, TrophyIcon } from "lucide-react";
 import RevenueChart from "@/components/RevenueChart";
 import { Card } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useCakeSales } from "@/lib/store";
 import { cakeStrings as s } from "@/lib/strings";
 import {
@@ -29,8 +36,23 @@ export default function SalesReportPage() {
   const [view, setView] = useState<View>("month");
   const monthly = useMemo(() => summarizeByMonth(sales), [sales]);
   const yearly = useMemo(() => summarizeByYear(sales), [sales]);
-  const byCakeType = useMemo(() => summarizeByCakeType(sales), [sales]);
   const periods = view === "month" ? monthly : yearly;
+
+  // Which single period (a specific month or year key, matching `periods`
+  // above) the cake-type ranking is scoped to — "all" for every sale ever
+  // logged. Resets to "all" on every view switch since a month key
+  // ("2026-08") and a year key ("2026") aren't the same namespace, so a
+  // stale one would silently match nothing.
+  const [cakeTypePeriod, setCakeTypePeriod] = useState("all");
+  const cakeTypeSales = useMemo(() => {
+    if (cakeTypePeriod === "all") return sales;
+    const keyLength = view === "month" ? 7 : 4;
+    return sales.filter((sale) => sale.date.slice(0, keyLength) === cakeTypePeriod);
+  }, [sales, cakeTypePeriod, view]);
+  const byCakeType = useMemo(
+    () => summarizeByCakeType(cakeTypeSales),
+    [cakeTypeSales],
+  );
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-4 p-4">
@@ -59,11 +81,42 @@ export default function SalesReportPage() {
       ) : (
         <>
           {/* Which cake to keep making — the whole menu ranked by units
-              sold (all-time, independent of the month/year toggle below),
-              not just the single winner the header/homepage badge names. */}
+              sold, not just the single winner the header/homepage badge
+              names. Defaults to all-time; the picker scopes it to one
+              specific month or year instead, reusing whichever granularity
+              the toggle below is currently set to. */}
           <Card className="p-4 shadow-sm">
-            <div className="text-xs font-medium tracking-wide text-muted uppercase">
-              {s.reportByCakeType}
+            <div className="flex items-center justify-between gap-2">
+              <div className="text-xs font-medium tracking-wide text-muted uppercase">
+                {s.reportByCakeType}
+              </div>
+              <Select
+                value={cakeTypePeriod}
+                onValueChange={(value) => setCakeTypePeriod(value ?? "all")}
+              >
+                <SelectTrigger size="sm" className="h-7 text-xs">
+                  {/* SelectValue renders the raw `value` by default; since
+                      "all" isn't itself a label (unlike the cake-type
+                      Select elsewhere, where value === label), it needs an
+                      explicit value→label lookup. */}
+                  <SelectValue>
+                    {(value: string) =>
+                      value === "all"
+                        ? s.allTime
+                        : (periods.find((period) => period.key === value)
+                            ?.label ?? value)
+                    }
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{s.allTime}</SelectItem>
+                  {[...periods].reverse().map((period) => (
+                    <SelectItem key={period.key} value={period.key}>
+                      {period.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <ul className="mt-3 flex flex-col gap-2.5">
               {byCakeType.map((entry, index) => (
@@ -84,7 +137,10 @@ export default function SalesReportPage() {
                   key={option}
                   type="button"
                   aria-pressed={view === option}
-                  onClick={() => setView(option)}
+                  onClick={() => {
+                    setView(option);
+                    setCakeTypePeriod("all");
+                  }}
                   className={cn(
                     "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
                     view === option
