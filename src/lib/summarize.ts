@@ -5,11 +5,16 @@ function round2(value: number): number {
   return Math.round(value * 100) / 100;
 }
 
-/** Formats an amount with the shekel sign prefixed (e.g. "₪12.50"). Not
- * `Intl.NumberFormat` currency formatting — there's no locale/currency
- * switching here, the symbol is always ₪. */
+/** Formats an amount with the shekel sign prefixed (e.g. "₪12.50", "-₪12.50"
+ * for a negative amount — the minus sign belongs before the currency
+ * symbol, not between it and the digits like `${CAKE_CURRENCY}${amount}`
+ * would produce ("₪-12.50"), the sole caller (`/profit`'s net figures) is
+ * the first ever to pass a negative amount here. Not `Intl.NumberFormat`
+ * currency formatting — there's no locale/currency switching here, the
+ * symbol is always ₪. */
 export function formatCakeAmount(amount: number): string {
-  return `${CAKE_CURRENCY}${amount.toFixed(2)}`;
+  const sign = amount < 0 ? "-" : "";
+  return `${sign}${CAKE_CURRENCY}${Math.abs(amount).toFixed(2)}`;
 }
 
 export function saleTotal(

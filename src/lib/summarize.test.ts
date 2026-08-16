@@ -62,6 +62,14 @@ describe("formatCakeAmount", () => {
   it("rounds display to two decimals without changing the value", () => {
     expect(formatCakeAmount(0.1 + 0.2)).toBe("₪0.30");
   });
+
+  it("puts the minus sign before the currency symbol for a negative amount", () => {
+    expect(formatCakeAmount(-25.5)).toBe("-₪25.50");
+  });
+
+  it("doesn't render a sign for zero", () => {
+    expect(formatCakeAmount(0)).toBe("₪0.00");
+  });
 });
 
 describe("toIsoDate", () => {

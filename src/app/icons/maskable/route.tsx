@@ -7,7 +7,7 @@ import { AppIconTile } from "@/lib/app-icon-mark";
 export const dynamic = "force-static";
 
 // Android crops "maskable" icons to a circle/squircle and can cut up to
-// ~20% off each edge, so this one gives the cupcake a bigger safe zone
+// ~20% off each edge, so this one gives the cake mark a bigger safe zone
 // (smaller markRatio) than the plain "any"-purpose tile in
 // icons/[size]/route.tsx — same black gradient, just more headroom.
 export async function GET() {
