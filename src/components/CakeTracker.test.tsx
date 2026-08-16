@@ -28,16 +28,16 @@ describe("CakeTracker", () => {
   // existing (different) sale — and confirm the edit form shows *that*
   // sale's own cake type and price, not the cancelled attempt's. This is
   // what actually exercises CakeTracker's `openSaleSheet` bumping its
-  // session key on every open; a regression that dropped `key={sheetSession}`
-  // from the AddSaleSheet call site would fail here even though
-  // AddSaleSheet's own tests (which supply the key change directly) would
-  // still pass.
+  // session counter on every open; a regression that dropped
+  // `formKey={sheetSession}` from the AddSaleSheet call site would fail
+  // here even though AddSaleSheet's own tests (which supply the formKey
+  // change directly) would still pass.
   it("doesn't carry a cancelled sale's cake type/price into editing a different sale", async () => {
     const user = userEvent.setup();
     render(<CakeTracker />);
 
     await user.click(screen.getByRole("button", { name: "רישום מכירה" }));
-    await user.click(screen.getByRole("combobox"));
+    await user.click(screen.getByRole("combobox", { name: "עוגה" }));
     await user.click(await screen.findByRole("option", { name: "Chocolate cake" }));
     expect(screen.getByLabelText("מחיר ליחידה")).toHaveValue(20);
     await user.click(screen.getByRole("button", { name: "ביטול" }));
@@ -46,7 +46,7 @@ describe("CakeTracker", () => {
 
     // Scoped to the dropdown trigger, not the page as a whole — the sale
     // history row behind the (still-open) sheet also says "Lemon cake".
-    const cakeTypeField = within(screen.getByRole("combobox"));
+    const cakeTypeField = within(screen.getByRole("combobox", { name: "עוגה" }));
     expect(cakeTypeField.getByText("Lemon cake")).toBeInTheDocument();
     expect(cakeTypeField.queryByText("Chocolate cake")).not.toBeInTheDocument();
     expect(screen.getByLabelText("מחיר ליחידה")).toHaveValue(8);

@@ -22,6 +22,7 @@ import {
 import AddSaleSheet from "@/components/AddSaleSheet";
 import CakeLogo from "@/components/CakeLogo";
 import ManageCakeTypesSheet from "@/components/ManageCakeTypesSheet";
+import PaymentMethodBadge from "@/components/PaymentMethodBadge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useToday } from "@/hooks/use-today";
@@ -57,11 +58,13 @@ export default function CakeTracker() {
   const [manageOpen, setManageOpen] = useState(false);
 
   // Bumped on every open (not just when the target changes) and passed to
-  // AddSaleSheet as its `key` below — forces a full remount each time,
-  // resetting its internal cake-type/price state instead of carrying over
-  // whatever the previous open (a different sale, or none) left behind. See
-  // AddSaleSheet's own comment for why that state can't safely survive a
-  // still-mounted reuse.
+  // AddSaleSheet as `formKey`, which it uses to remount only its inner form
+  // — not the Drawer/Dialog chrome itself — each time. That resets the
+  // form's cake-type/price state instead of carrying over whatever the
+  // previous open (a different sale, or none) left behind, without
+  // disturbing the sheet's own open/close animation. See AddSaleSheet's
+  // comment for why keying the whole sheet (an earlier version of this
+  // fix) broke that animation instead.
   const [sheetSession, setSheetSession] = useState(0);
   function openSaleSheet(editing: CakeSale | null) {
     setSheetSession((session) => session + 1);
@@ -158,7 +161,7 @@ export default function CakeTracker() {
       </div>
 
       <AddSaleSheet
-        key={sheetSession}
+        formKey={sheetSession}
         open={sheet.open}
         editing={sheet.editing}
         cakeTypes={cakeTypes}
@@ -275,16 +278,22 @@ export default function CakeTracker() {
                 {group.sales.map((sale) => (
                   <li key={sale.id}>
                     <Card className="flex-row items-start justify-between gap-2 p-3 shadow-sm">
-                      <div className="min-w-0">
-                        <div className="font-medium">{sale.cakeType}</div>
-                        <div className="mt-0.5 text-xs tracking-wide text-muted">
-                          {sale.quantity} × {money(sale.pricePerUnit, true)}
+                      <div className="flex min-w-0 gap-2">
+                        <PaymentMethodBadge
+                          method={sale.paymentMethod ?? "cash"}
+                          className="mt-0.5"
+                        />
+                        <div className="min-w-0">
+                          <div className="font-medium">{sale.cakeType}</div>
+                          <div className="mt-0.5 text-xs tracking-wide text-muted">
+                            {sale.quantity} × {money(sale.pricePerUnit, true)}
+                          </div>
+                          {sale.note && (
+                            <p className="mt-1.5 truncate text-sm text-foreground/80">
+                              {sale.note}
+                            </p>
+                          )}
                         </div>
-                        {sale.note && (
-                          <p className="mt-1.5 truncate text-sm text-foreground/80">
-                            {sale.note}
-                          </p>
-                        )}
                       </div>
                       <div className="flex shrink-0 flex-col items-end gap-1">
                         <span className="font-semibold">
