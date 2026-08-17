@@ -1,9 +1,11 @@
 # Cake Sales Tracker
 
 A Hebrew, mobile-first app for a home baker to log cake sales, track
-expenses, and see a monthly/yearly sales report — built with Next.js 16 and
-Tailwind. No login, no backend: everything lives in the browser's
-`localStorage`, so it works the moment you open the page.
+expenses, and see a monthly/yearly sales report — built with Next.js 16,
+Tailwind, and Supabase. Each account's data (sales, cake types, expenses) is
+private to that account; there's no self-serve sign-up, an admin creates
+each account directly in the Supabase dashboard (see
+[Adding a user](#adding-a-user) below).
 
 Started life as a mini-app bolted onto an unrelated trip-planner repo (a
 convenient, already-set-up scaffold); this is that app pulled out into its
@@ -17,8 +19,47 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). That's it — no
-environment variables, no database to set up.
+Open [http://localhost:3000](http://localhost:3000).
+
+This needs a Supabase project first — see [Setting up Supabase](#setting-up-supabase)
+below. Without `NEXT_PUBLIC_SUPABASE_URL`/`NEXT_PUBLIC_SUPABASE_ANON_KEY` set,
+the app throws as soon as it tries to talk to Supabase (login, or any data
+read/write).
+
+## Setting up Supabase
+
+1. Create a free project at [supabase.com](https://supabase.com).
+2. In the SQL editor, run `supabase/schema.sql` from this repo — it creates
+   the `cake_types`/`cake_sales`/`cake_expenses` tables with row-level
+   security so each account only ever sees its own rows.
+3. In **Project Settings → API**, copy the **Project URL** and the
+   **anon public** key.
+4. Create a `.env.local` file in the repo root:
+   ```
+   NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+   ```
+5. Add at least one user (see below) before logging in — there's no
+   sign-up screen.
+
+### Adding a user
+
+There's no in-app sign-up — accounts are created by the admin, directly in
+Supabase:
+
+1. Supabase dashboard → **Authentication → Users → Add user**.
+2. For the **Email** field, use `<username>@cake-sales-tracker.local`
+   (lowercase) — the login screen only asks for a username, so
+   `src/lib/auth.ts` maps it to this fake address under the hood. It's
+   never emailed, so any domain works as long as it's consistent.
+3. Set a password, and turn on **Auto Confirm User** (there's no email
+   flow here to confirm it another way).
+4. Tell the person their username and password. They log in with those,
+   exactly like before.
+
+Each account's data is completely separate (row-level security keyed on
+`auth.uid()`) — there's no shared workspace or way for one account to see
+another's sales/expenses/types.
 
 ## Installing it on a phone
 
@@ -33,12 +74,26 @@ because as far as the OS is concerned it now is one.
 
 ## How it's put together
 
-- **No login, no backend.** `src/lib/store.ts` keeps sales, cake types, and
-  expenses in `localStorage` via a `useSyncExternalStore` store (the same
-  shape as `useIsDesktop`), so every add/edit/delete anywhere in the tree
-  re-renders every reader without prop-drilling or a context provider. One
-  generic `createListStore` factory backs all three lists — sales, cake
-  types, and expenses are all just "a list of objects with an id".
+- **Real accounts, real backend, per-account data.** `src/lib/auth.ts` signs
+  in against Supabase Auth (a login screen, no sign-up — see
+  [Adding a user](#adding-a-user)); `src/lib/store.ts` reads/writes sales,
+  cake types, and expenses straight to Supabase tables, scoped to the
+  signed-in account by row-level security (`supabase/schema.sql`). Both are
+  still exposed as `useSyncExternalStore` stores (the same shape as
+  `useIsDesktop`), so every add/edit/delete anywhere in the tree re-renders
+  every reader without prop-drilling or a context provider — writes update
+  the in-memory cache immediately and only roll back if the Supabase
+  request actually fails, so it still feels as instant as the old
+  localStorage-only version. One generic `createListStore` factory backs
+  all three lists — sales, cake types, and expenses are all just "a list of
+  objects with an id" scoped to one table each.
+- **Never deletes pre-Supabase local data.** This app used to be pure
+  `localStorage`, with no accounts at all. `src/lib/migrate-legacy-data.ts`
+  runs once on first login per browser: if the old `cake-sales:*` keys have
+  anything in them, it uploads that into the newly-signed-in account and
+  sets a `cake-sales:migrated:v1` flag so it doesn't re-upload on every
+  login — but it never deletes or overwrites the original keys, so
+  whatever was already saved in the browser stays exactly where it was.
 - **Hebrew only, on purpose.** `src/lib/strings.ts` is a plain object of
   Hebrew strings — no dictionary/locale system, no language switcher, since
   the baker only reads Hebrew. `src/app/layout.tsx` sets `dir="rtl" lang="he"`
@@ -147,9 +202,10 @@ here).
 
 - Multiple currencies — right now everything is a fixed `₪`
   (`CAKE_CURRENCY` in `src/lib/strings.ts`).
-- Sync across devices — would need real accounts and a backend (e.g.
-  Supabase auth + tables for sales/cake types/expenses with row-level
-  security), which this app deliberately doesn't have yet.
+- Self-serve sign-up / password reset — right now the admin creates every
+  account by hand in the Supabase dashboard (see
+  [Adding a user](#adding-a-user)); fine for a handful of accounts, not for
+  many.
 - Customer/order tracking: who ordered what, and a pickup date.
 - A monthly/yearly report for expenses alone, mirroring `/report`'s
   cake-type breakdown but by expense category — `/profit` covers the

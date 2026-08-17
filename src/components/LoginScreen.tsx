@@ -11,24 +11,24 @@ import { cakeStrings as s } from "@/lib/strings";
 
 /**
  * Full-screen login gate shown by `AuthGate` in place of the app whenever
- * nobody's logged in yet. One form, one hardcoded account (see
- * `src/lib/auth.ts`) — there's no "forgot password" or sign-up flow because
- * there's nothing behind this but a client-side check.
+ * nobody's logged in yet. One form, checked against Supabase Auth (see
+ * `src/lib/auth.ts`) — there's no sign-up flow because accounts are created
+ * by the admin, not self-served.
  */
 export default function LoginScreen() {
   const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
     const username = String(data.get("username") ?? "");
     const password = String(data.get("password") ?? "");
 
-    if (!login(username, password)) {
-      setError(s.errorLogin);
-      return;
-    }
-    setError(null);
+    setPending(true);
+    const errorMessage = await login(username, password);
+    setPending(false);
+    setError(errorMessage);
   }
 
   return (
@@ -54,6 +54,7 @@ export default function LoginScreen() {
                 name="username"
                 autoComplete="username"
                 autoFocus
+                disabled={pending}
                 className="h-11"
               />
             </div>
@@ -64,11 +65,12 @@ export default function LoginScreen() {
                 type="password"
                 name="password"
                 autoComplete="current-password"
+                disabled={pending}
                 className="h-11"
               />
             </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
-            <Button type="submit" className="h-11">
+            <Button type="submit" disabled={pending} className="h-11">
               {s.login}
             </Button>
           </form>

@@ -1,84 +1,105 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import type { User } from "@supabase/supabase-js";
+import { migrateLegacyLocalData } from "./migrate-legacy-data";
+import { setStoresUser } from "./store";
+import { cakeStrings as s } from "./strings";
+import { getSupabaseClient } from "./supabase/client";
 
-const AUTH_KEY = "cake-sales:auth:v1";
+// Real accounts now live in Supabase Auth (see supabase/schema.sql for the
+// data side, and the README for how the admin adds a new account — there's
+// no self-serve sign-up screen here, on purpose: the admin creates each
+// account directly in the Supabase dashboard). Supabase's password auth
+// wants an email, but this app's login form only ever asked for a plain
+// username — rather than change that UX, usernames are mapped to a
+// synthetic address on a domain nobody sends real mail to or needs to
+// verify.
+const EMAIL_DOMAIN = "cake-sales-tracker.local";
 
-// A single hardcoded account. This app has no backend to check credentials
-// against — see the README — so there's nothing to authenticate against but
-// this. That makes it a UI gate, not real access control: the password ships
-// in the client bundle, so anyone with dev tools can read it. Fine for one
-// baker keeping her own phone's app out of casual reach; don't reuse this
-// pattern for anything that needs to keep data actually private.
-const USERNAME = "ido";
-const PASSWORD = "1234";
+function usernameToEmail(username: string): string {
+  return `${username.trim().toLowerCase()}@${EMAIL_DOMAIN}`;
+}
 
+let user: User | null = null;
+let initialized = false;
 const listeners = new Set<() => void>();
 
-function read(): boolean {
-  if (typeof window === "undefined") return false;
-  try {
-    return window.localStorage.getItem(AUTH_KEY) === "1";
-  } catch {
-    // Storage disabled (private mode) — treat as logged out rather than
-    // crashing the app.
-    return false;
+function notify() {
+  listeners.forEach((listener) => listener());
+}
+
+function setUser(next: User | null) {
+  const wasLoggedOut = user === null;
+  user = next;
+  notify();
+  setStoresUser(next?.id ?? null);
+  if (next && wasLoggedOut) {
+    // Fire-and-forget: never blocks the UI on the migration finishing, and
+    // failures are retried on the next login rather than surfaced here.
+    void migrateLegacyLocalData(next.id);
   }
+}
+
+function ensureInitialized() {
+  if (initialized) return;
+  initialized = true;
+  const supabase = getSupabaseClient();
+  // Also fires once immediately with whatever session Supabase already has
+  // persisted (or null), so there's no separate `getSession()` call needed
+  // just to get the initial state.
+  supabase.auth.onAuthStateChange((_event, session) => {
+    setUser(session?.user ?? null);
+  });
 }
 
 function subscribe(callback: () => void) {
+  ensureInitialized();
   listeners.add(callback);
-  // Keeps multiple tabs (e.g. phone + desktop open at once) in sync: log out
-  // in one, the other drops back to the login screen too.
-  function onStorage(event: StorageEvent) {
-    if (event.key === AUTH_KEY) callback();
-  }
-  window.addEventListener("storage", onStorage);
-  return () => {
-    listeners.delete(callback);
-    window.removeEventListener("storage", onStorage);
-  };
+  return () => listeners.delete(callback);
 }
 
-// No server-side session here (this app has no backend), so the server
-// snapshot is always "logged out"; the client re-renders once with the real
-// value right after mount, same as every other store in this app.
-function getServerSnapshot(): boolean {
-  return false;
+function getSnapshot(): User | null {
+  return user;
+}
+
+// No server-side session here (this runs entirely client-side against
+// Supabase), so the server snapshot is always "logged out"; the client
+// re-renders once with the real session right after mount, same as every
+// other store in this app.
+function getServerSnapshot(): User | null {
+  return null;
 }
 
 /**
- * Whether the one baker is currently logged in. Backed by `localStorage`
- * (not a plain in-memory flag), so it stays true across reloads and browser
- * restarts — the whole point being "stay logged in until logout", not
- * "logged in for this tab session".
+ * Whether someone is currently logged in. Backed by Supabase's own session
+ * (which persists itself across reloads/restarts), exposed the same
+ * `useSyncExternalStore` way as every other store in this app.
  */
 export function useIsLoggedIn(): boolean {
-  return useSyncExternalStore(subscribe, read, getServerSnapshot);
+  return (
+    useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot) !== null
+  );
 }
 
 /**
- * Checks the given credentials against the one hardcoded account. On a
- * match, persists the logged-in flag and returns true; otherwise leaves
- * state untouched and returns false so the caller can show an error.
+ * Signs in against Supabase Auth. Returns `null` on success, or a Hebrew
+ * error message to show the user otherwise.
  */
-export function login(username: string, password: string): boolean {
-  if (username.trim() !== USERNAME || password !== PASSWORD) return false;
-  try {
-    window.localStorage.setItem(AUTH_KEY, "1");
-  } catch {
-    // Storage disabled — the flag won't survive a reload, but this tab's
-    // listeners still fire below so login "succeeds" for the current tab.
-  }
-  listeners.forEach((listener) => listener());
-  return true;
+export async function login(
+  username: string,
+  password: string,
+): Promise<string | null> {
+  if (!username.trim() || !password) return s.errorLogin;
+  const supabase = getSupabaseClient();
+  const { error } = await supabase.auth.signInWithPassword({
+    email: usernameToEmail(username),
+    password,
+  });
+  return error ? s.errorLogin : null;
 }
 
-export function logout(): void {
-  try {
-    window.localStorage.removeItem(AUTH_KEY);
-  } catch {
-    // ignore
-  }
-  listeners.forEach((listener) => listener());
+export async function logout(): Promise<void> {
+  const supabase = getSupabaseClient();
+  await supabase.auth.signOut();
 }

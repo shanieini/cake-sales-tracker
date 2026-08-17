@@ -2,23 +2,24 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import CakeTracker from "./CakeTracker";
-
-const cakeTypes = [
-  { id: "t1", name: "Chocolate cake", defaultPrice: 20 },
-  { id: "t2", name: "Lemon cake", defaultPrice: 8 },
-];
-const sale = {
-  id: "s1",
-  cakeType: "Lemon cake",
-  quantity: 6,
-  pricePerUnit: 8,
-  date: "2026-08-10",
-  createdAt: "2026-08-10T10:00:00.000Z",
-};
+import { addCakeSale, addCakeType, setStoresUser } from "@/lib/store";
 
 beforeEach(() => {
-  localStorage.setItem("cake-sales:types:v1", JSON.stringify(cakeTypes));
-  localStorage.setItem("cake-sales:v1", JSON.stringify([sale]));
+  // No signed-in user in this test environment. `setStoresUser(null)`
+  // resets every store's cache to empty (same as a real sign-out), and
+  // `addCakeType`/`addCakeSale` below still populate that cache the same
+  // optimistic way they do for a real signed-in user — they just skip the
+  // Supabase write itself since there's no user id to attach it to (see
+  // `src/lib/store.ts`).
+  setStoresUser(null);
+  addCakeType({ name: "Chocolate cake", defaultPrice: 20 });
+  addCakeType({ name: "Lemon cake", defaultPrice: 8 });
+  addCakeSale({
+    cakeType: "Lemon cake",
+    quantity: 6,
+    pricePerUnit: 8,
+    date: "2026-08-10",
+  });
 });
 
 describe("CakeTracker", () => {
