@@ -5,16 +5,24 @@ function round2(value: number): number {
   return Math.round(value * 100) / 100;
 }
 
-/** Formats an amount with the shekel sign prefixed (e.g. "₪12.50", "-₪12.50"
- * for a negative amount — the minus sign belongs before the currency
- * symbol, not between it and the digits like `${CAKE_CURRENCY}${amount}`
- * would produce ("₪-12.50"), the sole caller (`/profit`'s net figures) is
- * the first ever to pass a negative amount here. Not `Intl.NumberFormat`
- * currency formatting — there's no locale/currency switching here, the
- * symbol is always ₪. */
+/** Digits of an amount: thousands separated by commas, always two decimals
+ * ("1,234.50"). Pinned to en-US rather than the viewer's locale so the
+ * separators never flip to "1.234,50" on a device set to another language. */
+const AMOUNT_DIGITS = new Intl.NumberFormat("en-US", {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+/** Formats an amount with the shekel sign prefixed and thousands separated
+ * (e.g. "₪1,234.50", "-₪1,234.50" for a negative amount — the minus sign
+ * belongs before the currency symbol, not between it and the digits like
+ * `${CAKE_CURRENCY}${amount}` would produce ("₪-12.50"), the sole caller
+ * (`/profit`'s net figures) is the first ever to pass a negative amount
+ * here. Not `Intl.NumberFormat` currency formatting — there's no
+ * locale/currency switching here, the symbol is always ₪. */
 export function formatCakeAmount(amount: number): string {
   const sign = amount < 0 ? "-" : "";
-  return `${sign}${CAKE_CURRENCY}${Math.abs(amount).toFixed(2)}`;
+  return `${sign}${CAKE_CURRENCY}${AMOUNT_DIGITS.format(Math.abs(amount))}`;
 }
 
 export function saleTotal(
