@@ -70,6 +70,19 @@ describe("formatCakeAmount", () => {
   it("doesn't render a sign for zero", () => {
     expect(formatCakeAmount(0)).toBe("₪0.00");
   });
+
+  it("separates thousands with commas", () => {
+    expect(formatCakeAmount(1234.5)).toBe("₪1,234.50");
+    expect(formatCakeAmount(1234567)).toBe("₪1,234,567.00");
+  });
+
+  it("leaves amounts under a thousand without a separator", () => {
+    expect(formatCakeAmount(999.99)).toBe("₪999.99");
+  });
+
+  it("separates thousands on a negative amount too", () => {
+    expect(formatCakeAmount(-12345.6)).toBe("-₪12,345.60");
+  });
 });
 
 describe("toIsoDate", () => {
