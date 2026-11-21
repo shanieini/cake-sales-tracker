@@ -251,6 +251,83 @@ input[type="number"]::-webkit-outer-spin-button {
   }
 }
 
+/* "Sale logged" celebration popup (src/components/SaleCelebration.tsx).
+   Each confetti piece is two boxes: the outer one sways side to side, the
+   inner one falls and spins, so the two motions don't fight over one
+   `transform`. Per-piece sizes, colours, durations and delays are inline
+   styles from the component. The egg tile's wobble is a `transform` too,
+   which leaves alone the `translate` Tailwind uses to centre it. */
+.confetti-sway {
+  animation: confetti-sway ease-in-out infinite alternate;
+}
+
+.confetti-fall-a,
+.confetti-fall-b {
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  animation-fill-mode: both;
+}
+
+.confetti-fall-a {
+  animation-name: confetti-fall-a;
+}
+
+.confetti-fall-b {
+  animation-name: confetti-fall-b;
+}
+
+.egg-wobble {
+  animation: egg-wobble 1.6s ease-in-out infinite;
+}
+
+@keyframes confetti-sway {
+  from {
+    transform: translateX(-14px);
+  }
+  to {
+    transform: translateX(14px);
+  }
+}
+
+@keyframes confetti-fall-a {
+  from {
+    transform: translateY(-40px) rotate(0deg);
+  }
+  to {
+    transform: translateY(110vh) rotate(720deg);
+  }
+}
+
+@keyframes confetti-fall-b {
+  from {
+    transform: translateY(-40px) rotate(0deg);
+  }
+  to {
+    transform: translateY(110vh) rotate(-540deg);
+  }
+}
+
+@keyframes egg-wobble {
+  0%,
+  100% {
+    transform: rotate(-8deg);
+  }
+  50% {
+    transform: rotate(8deg);
+  }
+}
+
+/* Less motion asked for: no confetti at all (frozen pieces would just be a
+   row of specks along the top) and an egg that sits still. */
+@media (prefers-reduced-motion: reduce) {
+  .confetti-layer {
+    display: none;
+  }
+  .egg-wobble {
+    animation: none;
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
