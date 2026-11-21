@@ -1,8 +1,25 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import CakeTracker from "./CakeTracker";
 import { addCakeSale, addCakeType, setStoresUser } from "@/lib/store";
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
+/** Logs a Chocolate cake sale through the real "רישום מכירה" form. */
+async function logChocolateSale(
+  user: ReturnType<typeof userEvent.setup>,
+  quantity: number,
+) {
+  await user.click(screen.getByRole("button", { name: "רישום מכירה" }));
+  await user.click(screen.getByRole("combobox", { name: "עוגה" }));
+  await user.click(await screen.findByRole("option", { name: "Chocolate cake" }));
+  await user.clear(screen.getByLabelText("כמות"));
+  await user.type(screen.getByLabelText("כמות"), String(quantity));
+  await user.click(screen.getByRole("button", { name: "הוספת מכירה" }));
+}
 
 beforeEach(() => {
   // No signed-in user in this test environment. `setStoresUser(null)`
@@ -54,15 +71,12 @@ describe("CakeTracker", () => {
   });
 
   it("pops the celebration up after a new sale, with what was sold, until it's dismissed", async () => {
+    // Pins the random pick to the first phrase.
+    vi.spyOn(Math, "random").mockReturnValue(0);
     const user = userEvent.setup();
     render(<CakeTracker />);
 
-    await user.click(screen.getByRole("button", { name: "רישום מכירה" }));
-    await user.click(screen.getByRole("combobox", { name: "עוגה" }));
-    await user.click(await screen.findByRole("option", { name: "Chocolate cake" }));
-    await user.clear(screen.getByLabelText("כמות"));
-    await user.type(screen.getByLabelText("כמות"), "60");
-    await user.click(screen.getByRole("button", { name: "הוספת מכירה" }));
+    await logChocolateSale(user, 60);
 
     const popup = await screen.findByRole("dialog", { name: "יא מוסס זין" });
     expect(within(popup).getByText("Chocolate cake × 60")).toBeInTheDocument();
@@ -74,6 +88,24 @@ describe("CakeTracker", () => {
       expect(screen.queryByRole("dialog", { name: "יא מוסס זין" })).not.toBeInTheDocument(),
     );
     expect(screen.queryByTestId("confetti")).not.toBeInTheDocument();
+  });
+
+  it("heads two sales in a row with two different phrases", async () => {
+    // Always the first option: the first phrase, then (with that one ruled
+    // out as a repeat) the second.
+    vi.spyOn(Math, "random").mockReturnValue(0);
+    const user = userEvent.setup();
+    render(<CakeTracker />);
+
+    await logChocolateSale(user, 1);
+    const first = await screen.findByRole("dialog", { name: "יא מוסס זין" });
+    await user.click(within(first).getByRole("button", { name: "יאללה" }));
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: "יא מוסס זין" })).not.toBeInTheDocument(),
+    );
+
+    await logChocolateSale(user, 2);
+    expect(await screen.findByRole("dialog", { name: "יא אוכל בתחת" })).toBeInTheDocument();
   });
 
   it("doesn't pop the celebration up after editing an existing sale", async () => {
