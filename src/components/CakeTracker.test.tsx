@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import CakeTracker from "./CakeTracker";
 import { addCakeSale, addCakeType, setStoresUser } from "@/lib/store";
@@ -51,5 +51,39 @@ describe("CakeTracker", () => {
     expect(cakeTypeField.getByText("Lemon cake")).toBeInTheDocument();
     expect(cakeTypeField.queryByText("Chocolate cake")).not.toBeInTheDocument();
     expect(screen.getByLabelText("מחיר ליחידה")).toHaveValue(8);
+  });
+
+  it("pops the celebration up after a new sale, with what was sold, until it's dismissed", async () => {
+    const user = userEvent.setup();
+    render(<CakeTracker />);
+
+    await user.click(screen.getByRole("button", { name: "רישום מכירה" }));
+    await user.click(screen.getByRole("combobox", { name: "עוגה" }));
+    await user.click(await screen.findByRole("option", { name: "Chocolate cake" }));
+    await user.clear(screen.getByLabelText("כמות"));
+    await user.type(screen.getByLabelText("כמות"), "60");
+    await user.click(screen.getByRole("button", { name: "הוספת מכירה" }));
+
+    const popup = await screen.findByRole("dialog", { name: "יא מוסס זין" });
+    expect(within(popup).getByText("Chocolate cake × 60")).toBeInTheDocument();
+    expect(within(popup).getByText("₪1,200.00")).toBeInTheDocument();
+    expect(screen.getByTestId("confetti")).toBeInTheDocument();
+
+    await user.click(within(popup).getByRole("button", { name: "יאללה" }));
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: "יא מוסס זין" })).not.toBeInTheDocument(),
+    );
+    expect(screen.queryByTestId("confetti")).not.toBeInTheDocument();
+  });
+
+  it("doesn't pop the celebration up after editing an existing sale", async () => {
+    const user = userEvent.setup();
+    render(<CakeTracker />);
+
+    await user.click(screen.getByRole("button", { name: "עריכת מכירה" }));
+    await user.click(screen.getByRole("button", { name: "שמירת שינויים" }));
+
+    expect(screen.queryByRole("dialog", { name: "יא מוסס זין" })).not.toBeInTheDocument();
+    expect(screen.queryByTestId("confetti")).not.toBeInTheDocument();
   });
 });

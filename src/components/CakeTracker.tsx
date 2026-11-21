@@ -23,6 +23,7 @@ import AddSaleSheet from "@/components/AddSaleSheet";
 import CakeLogo from "@/components/CakeLogo";
 import ManageCakeTypesSheet from "@/components/ManageCakeTypesSheet";
 import PaymentMethodBadge from "@/components/PaymentMethodBadge";
+import SaleCelebration from "@/components/SaleCelebration";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useToday } from "@/hooks/use-today";
@@ -78,9 +79,21 @@ export default function CakeTracker() {
   const summary = useMemo(() => summarizeCakeSales(sales, today), [sales, today]);
   const groups = useMemo(() => groupSalesByDay(sales), [sales]);
 
+  // The joke popup after a new sale. `sale` outlives `open` so the popup
+  // keeps its text while it animates closed.
+  const [celebration, setCelebration] = useState<{
+    open: boolean;
+    sale: CakeSale | null;
+  }>({ open: false, sale: null });
+
   function handleSave(input: CakeSaleInput) {
-    if (sheet.editing) updateCakeSale(sheet.editing.id, input);
-    else addCakeSale(input);
+    if (sheet.editing) {
+      // Editing an existing sale isn't a new sale: no popup.
+      updateCakeSale(sheet.editing.id, input);
+      return;
+    }
+    const sale = addCakeSale(input);
+    setCelebration({ open: true, sale });
   }
 
   // Used by the sale form's empty-catalog prompt: close it and open the
@@ -171,6 +184,12 @@ export default function CakeTracker() {
       />
 
       <ManageCakeTypesSheet open={manageOpen} onOpenChange={setManageOpen} />
+
+      <SaleCelebration
+        open={celebration.open}
+        sale={celebration.sale}
+        onOpenChange={(open) => setCelebration((prev) => ({ ...prev, open }))}
+      />
 
       <div className="grid grid-cols-2 gap-3">
         {stats.map((stat, index) => {
