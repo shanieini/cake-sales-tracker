@@ -28,6 +28,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useToday } from "@/hooks/use-today";
 import { logout } from "@/lib/auth";
+import { pickCelebrationTitle } from "@/lib/celebration";
 import {
   addCakeSale,
   deleteCakeSale,
@@ -79,12 +80,14 @@ export default function CakeTracker() {
   const summary = useMemo(() => summarizeCakeSales(sales, today), [sales, today]);
   const groups = useMemo(() => groupSalesByDay(sales), [sales]);
 
-  // The joke popup after a new sale. `sale` outlives `open` so the popup
-  // keeps its text while it animates closed.
+  // The joke popup after a new sale. `sale` and `title` outlive `open` so
+  // the popup keeps its text while it animates closed, and `title` is also
+  // what the next pick avoids repeating.
   const [celebration, setCelebration] = useState<{
     open: boolean;
     sale: CakeSale | null;
-  }>({ open: false, sale: null });
+    title: string | null;
+  }>({ open: false, sale: null, title: null });
 
   function handleSave(input: CakeSaleInput) {
     if (sheet.editing) {
@@ -93,7 +96,10 @@ export default function CakeTracker() {
       return;
     }
     const sale = addCakeSale(input);
-    setCelebration({ open: true, sale });
+    // Picked here, in the event handler, not in a state updater: updaters
+    // must be pure, and React may run them twice.
+    const title = pickCelebrationTitle(celebration.title);
+    setCelebration({ open: true, sale, title });
   }
 
   // Used by the sale form's empty-catalog prompt: close it and open the
@@ -188,6 +194,7 @@ export default function CakeTracker() {
       <SaleCelebration
         open={celebration.open}
         sale={celebration.sale}
+        title={celebration.title ?? ""}
         onOpenChange={(open) => setCelebration((prev) => ({ ...prev, open }))}
       />
 

@@ -13,6 +13,9 @@ type Props = {
   /** The sale that was just logged. Kept by the caller after `open` turns
    * false so the popup still has its text while it animates out. */
   sale: CakeSale | null;
+  /** The phrase heading the popup, picked by the caller per sale (see
+   * `pickCelebrationTitle`) so it stays put while the popup is open. */
+  title: string;
   onOpenChange: (open: boolean) => void;
 };
 
@@ -69,15 +72,21 @@ const CONFETTI: ConfettiPiece[] = (() => {
 })();
 
 /**
- * The joke popup shown right after a new sale is logged: an egg, "יא מוסס
- * זין", what was sold, and confetti over the whole screen until it's
- * dismissed. Built from the dialog primitives rather than `DialogContent`,
+ * The joke popup shown right after a new sale is logged: an egg, a random
+ * phrase from `cakeStrings.celebrationTitles`, what was sold, and confetti
+ * over the whole screen until it's dismissed. Built from the dialog
+ * primitives rather than `DialogContent`,
  * because the confetti has to cover the whole viewport and so can't live
  * inside the (transformed) popup box. People who ask their device for less
  * motion get the popup without the confetti or the wobble (see
  * `globals.css`).
  */
-export default function SaleCelebration({ open, sale, onOpenChange }: Props) {
+export default function SaleCelebration({
+  open,
+  sale,
+  title,
+  onOpenChange,
+}: Props) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogPortal>
@@ -114,8 +123,8 @@ export default function SaleCelebration({ open, sale, onOpenChange }: Props) {
           <div className="egg-wobble absolute -top-12 left-1/2 flex size-24 -translate-x-1/2 items-center justify-center rounded-[1.9rem] bg-gradient-to-br from-primary to-primary-hover text-primary-foreground shadow-[0_18px_36px_-14px_color-mix(in_srgb,var(--primary)_70%,transparent)]">
             <EggLogo className="size-16" />
           </div>
-          <DialogPrimitive.Title className="text-4xl leading-tight font-extrabold tracking-tight">
-            {s.celebrationTitle}
+          <DialogPrimitive.Title className="text-4xl leading-tight font-extrabold tracking-tight text-balance">
+            {title}
           </DialogPrimitive.Title>
           <DialogPrimitive.Description className="text-sm text-muted">
             {s.celebrationBody}

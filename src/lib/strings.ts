@@ -10,7 +10,18 @@ export const cakeStrings = {
   logSale: "רישום מכירה",
   addSale: "הוספת מכירה",
   editSale: "עריכת מכירה",
-  celebrationTitle: "יא מוסס זין",
+  // One of these, picked at random, heads the popup after every new sale
+  // (see pickCelebrationTitle in src/lib/celebration.ts). Add a line here to
+  // add a phrase.
+  celebrationTitles: [
+    "יא מוסס זין",
+    "יא אוכל בתחת",
+    "יא מלקק ליונתן",
+    "לך לנחלה יא הומו",
+    "יש לך אשך אחד",
+    "יא אוהב קטן",
+    "יא בוחש צימקאו חום",
+  ],
   celebrationBody: "המכירה נרשמה",
   celebrationDismiss: "יאללה",
   today: "היום",
