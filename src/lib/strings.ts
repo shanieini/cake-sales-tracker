@@ -21,6 +21,8 @@ export const cakeStrings = {
     "יש לך אשך אחד",
     "יא אוהב קטן",
     "יא בוחש צימקאו חום",
+    "תכבה את המזגן יא מניאק",
+    "תקעווד",
   ],
   celebrationBody: "המכירה נרשמה",
   celebrationDismiss: "יאללה",
