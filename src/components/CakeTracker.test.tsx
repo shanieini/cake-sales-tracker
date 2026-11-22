@@ -81,6 +81,11 @@ describe("CakeTracker", () => {
     const popup = await screen.findByRole("dialog", { name: "יא מוסס זין" });
     expect(within(popup).getByText("Chocolate cake × 60")).toBeInTheDocument();
     expect(within(popup).getByText("₪1,200.00")).toBeInTheDocument();
+    // The first emoji in the list: the animated middle finger.
+    expect(within(popup).getByRole("img", { name: "אצבע משולשת" })).toHaveAttribute(
+      "src",
+      "/celebrations/1f595.webp",
+    );
     expect(screen.getByTestId("confetti")).toBeInTheDocument();
 
     await user.click(within(popup).getByRole("button", { name: "יאללה" }));
@@ -90,22 +95,26 @@ describe("CakeTracker", () => {
     expect(screen.queryByTestId("confetti")).not.toBeInTheDocument();
   });
 
-  it("heads two sales in a row with two different phrases", async () => {
-    // Always the first option: the first phrase, then (with that one ruled
-    // out as a repeat) the second.
+  it("gives two sales in a row two different phrases and two different emoji", async () => {
+    // Always the first option: the first phrase and emoji, then (with those
+    // ruled out as repeats) the second of each.
     vi.spyOn(Math, "random").mockReturnValue(0);
     const user = userEvent.setup();
     render(<CakeTracker />);
 
     await logChocolateSale(user, 1);
     const first = await screen.findByRole("dialog", { name: "יא מוסס זין" });
+    expect(within(first).getByRole("img", { name: "אצבע משולשת" })).toBeInTheDocument();
     await user.click(within(first).getByRole("button", { name: "יאללה" }));
     await waitFor(() =>
       expect(screen.queryByRole("dialog", { name: "יא מוסס זין" })).not.toBeInTheDocument(),
     );
 
     await logChocolateSale(user, 2);
-    expect(await screen.findByRole("dialog", { name: "יא אוכל בתחת" })).toBeInTheDocument();
+    const second = await screen.findByRole("dialog", { name: "יא אוכל בתחת" });
+    expect(
+      within(second).getByRole("img", { name: "שתי אצבעות משולשות" }),
+    ).toBeInTheDocument();
   });
 
   it("doesn't pop the celebration up after editing an existing sale", async () => {

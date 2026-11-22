@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   BarChart3Icon,
@@ -28,7 +28,14 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useToday } from "@/hooks/use-today";
 import { logout } from "@/lib/auth";
-import { pickCelebrationTitle } from "@/lib/celebration";
+import {
+  pickCelebrationTitle,
+  pickCelebrationVariant,
+} from "@/lib/celebration";
+import {
+  preloadCelebrationImage,
+  type CelebrationVariant,
+} from "@/lib/celebration-variants";
 import {
   addCakeSale,
   deleteCakeSale,
@@ -71,6 +78,7 @@ export default function CakeTracker() {
   function openSaleSheet(editing: CakeSale | null) {
     setSheetSession((session) => session + 1);
     setSheet({ open: true, editing });
+    if (!editing) prepareCelebration();
   }
 
   // Re-derived on focus/visibility (see the hook), not just on `sales`
@@ -80,14 +88,26 @@ export default function CakeTracker() {
   const summary = useMemo(() => summarizeCakeSales(sales, today), [sales, today]);
   const groups = useMemo(() => groupSalesByDay(sales), [sales]);
 
-  // The joke popup after a new sale. `sale` and `title` outlive `open` so
-  // the popup keeps its text while it animates closed, and `title` is also
-  // what the next pick avoids repeating.
+  // The joke popup after a new sale. `sale`, `title` and `variant` outlive
+  // `open` so the popup keeps its content while it animates closed, and
+  // `title`/`variant` are also what the next picks avoid repeating.
   const [celebration, setCelebration] = useState<{
     open: boolean;
     sale: CakeSale | null;
     title: string | null;
-  }>({ open: false, sale: null, title: null });
+    variant: CelebrationVariant | null;
+  }>({ open: false, sale: null, title: null, variant: null });
+
+  // The emoji the next popup will use, picked as soon as "log sale" opens so
+  // its image (a few hundred KB) downloads while the form is being filled
+  // in, and the popup can open straight into the animation.
+  const upcomingVariant = useRef<CelebrationVariant | null>(null);
+  function prepareCelebration() {
+    upcomingVariant.current ??= pickCelebrationVariant(
+      celebration.variant?.id ?? null,
+    );
+    preloadCelebrationImage(upcomingVariant.current);
+  }
 
   function handleSave(input: CakeSaleInput) {
     if (sheet.editing) {
@@ -99,7 +119,11 @@ export default function CakeTracker() {
     // Picked here, in the event handler, not in a state updater: updaters
     // must be pure, and React may run them twice.
     const title = pickCelebrationTitle(celebration.title);
-    setCelebration({ open: true, sale, title });
+    const variant =
+      upcomingVariant.current ??
+      pickCelebrationVariant(celebration.variant?.id ?? null);
+    upcomingVariant.current = null;
+    setCelebration({ open: true, sale, title, variant });
   }
 
   // Used by the sale form's empty-catalog prompt: close it and open the
@@ -195,6 +219,7 @@ export default function CakeTracker() {
         open={celebration.open}
         sale={celebration.sale}
         title={celebration.title ?? ""}
+        variant={celebration.variant}
         onOpenChange={(open) => setCelebration((prev) => ({ ...prev, open }))}
       />
 

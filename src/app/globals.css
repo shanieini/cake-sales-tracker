@@ -251,12 +251,15 @@ input[type="number"]::-webkit-outer-spin-button {
   }
 }
 
-/* "Sale logged" celebration popup (src/components/SaleCelebration.tsx).
-   Each confetti piece is two boxes: the outer one sways side to side, the
-   inner one falls and spins, so the two motions don't fight over one
-   `transform`. Per-piece sizes, colours, durations and delays are inline
-   styles from the component. The egg tile's wobble is a `transform` too,
-   which leaves alone the `translate` Tailwind uses to centre it. */
+/* "Sale logged" celebration popup (src/components/SaleCelebration.tsx and
+   src/lib/celebration-variants.ts). Each variant names one entrance
+   (.celebrate-enter-*) and one looping motion that starts once it has landed
+   (.celebrate-idle-*); they sit on separate nested elements so the two never
+   fight over one `transform`.
+
+   Confetti, and the emoji "rain", are two boxes per piece: the outer one
+   sways side to side, the inner one falls and spins. Per-piece sizes,
+   colours, durations and delays are inline styles from the component. */
 .confetti-sway {
   animation: confetti-sway ease-in-out infinite alternate;
 }
@@ -276,55 +279,195 @@ input[type="number"]::-webkit-outer-spin-button {
   animation-name: confetti-fall-b;
 }
 
-.egg-wobble {
-  animation: egg-wobble 1.6s ease-in-out infinite;
-}
-
 @keyframes confetti-sway {
-  from {
-    transform: translateX(-14px);
-  }
-  to {
-    transform: translateX(14px);
-  }
+  from { transform: translateX(-14px); }
+  to { transform: translateX(14px); }
 }
 
 @keyframes confetti-fall-a {
-  from {
-    transform: translateY(-40px) rotate(0deg);
-  }
-  to {
-    transform: translateY(110vh) rotate(720deg);
-  }
+  from { transform: translateY(-80px) rotate(0deg); }
+  to { transform: translateY(110vh) rotate(720deg); }
 }
 
 @keyframes confetti-fall-b {
-  from {
-    transform: translateY(-40px) rotate(0deg);
-  }
-  to {
-    transform: translateY(110vh) rotate(-540deg);
-  }
+  from { transform: translateY(-80px) rotate(0deg); }
+  to { transform: translateY(110vh) rotate(-540deg); }
 }
 
-@keyframes egg-wobble {
-  0%,
-  100% {
-    transform: rotate(-8deg);
-  }
-  50% {
-    transform: rotate(8deg);
-  }
+/* Entrances: play once. */
+.celebrate-enter-slam { animation: celebrate-enter-slam 0.8s cubic-bezier(0.3, 0.6, 0.4, 1) both; }
+.celebrate-enter-spin { animation: celebrate-enter-spin 0.9s cubic-bezier(0.2, 0.8, 0.3, 1) both; }
+.celebrate-enter-zoom { animation: celebrate-enter-zoom 0.8s ease-out both; }
+.celebrate-enter-roll { animation: celebrate-enter-roll 1s cubic-bezier(0.2, 0.8, 0.3, 1) both; }
+.celebrate-enter-rise { animation: celebrate-enter-rise 0.9s cubic-bezier(0.2, 0.8, 0.3, 1) both; }
+.celebrate-enter-stamp { animation: celebrate-enter-stamp 0.6s cubic-bezier(0.3, 0.7, 0.3, 1) both; }
+.celebrate-enter-slide { animation: celebrate-enter-slide 0.8s cubic-bezier(0.2, 0.8, 0.3, 1) both; }
+.celebrate-enter-drop { animation: celebrate-enter-drop 1.1s linear both; }
+
+@keyframes celebrate-enter-slam {
+  0% { transform: translateY(-110vh) scale(1.6) rotate(-15deg); }
+  55% { transform: translateY(0) scale(1) rotate(0deg); }
+  65% { transform: scale(1.25, 0.75); }
+  78% { transform: scale(0.9, 1.1); }
+  90% { transform: scale(1.05, 0.95); }
+  100% { transform: none; }
+}
+@keyframes celebrate-enter-spin {
+  0% { transform: scale(0) rotate(-1080deg); }
+  75% { transform: scale(1.15) rotate(15deg); }
+  100% { transform: none; }
+}
+@keyframes celebrate-enter-zoom {
+  0% { transform: scale(0); }
+  50% { transform: scale(1.6); }
+  70% { transform: scale(0.85); }
+  85% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+@keyframes celebrate-enter-roll {
+  0% { transform: translateX(110vw) rotate(720deg); }
+  70% { transform: translateX(-24px) rotate(-12deg); }
+  100% { transform: none; }
+}
+@keyframes celebrate-enter-rise {
+  0% { transform: translateY(110vh); }
+  60% { transform: translateY(-60px); }
+  75% { transform: translateY(12px); }
+  88% { transform: translateY(-12px); }
+  100% { transform: none; }
+}
+@keyframes celebrate-enter-stamp {
+  0% { transform: scale(3); opacity: 0; }
+  45% { transform: scale(0.85); opacity: 1; }
+  60% { transform: scale(1.08); }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes celebrate-enter-slide {
+  0% { transform: translateX(-110vw) rotate(-30deg); }
+  70% { transform: translateX(22px) rotate(8deg); }
+  100% { transform: none; }
+}
+@keyframes celebrate-enter-drop {
+  0% { transform: translateY(-110vh); }
+  40% { transform: translateY(0); }
+  55% { transform: translateY(-130px); }
+  70% { transform: translateY(0); }
+  80% { transform: translateY(-45px); }
+  90% { transform: translateY(0); }
+  95% { transform: translateY(-12px); }
+  100% { transform: none; }
 }
 
-/* Less motion asked for: no confetti at all (frozen pieces would just be a
-   row of specks along the top) and an egg that sits still. */
+/* Looping motions: start once the entrance has landed. */
+.celebrate-idle-pump { animation: celebrate-idle-pump 0.45s ease-in-out 1s infinite; transform-origin: 50% 100%; }
+.celebrate-idle-shake { animation: celebrate-idle-shake 0.14s linear 1s infinite; }
+.celebrate-idle-jelly { animation: celebrate-idle-jelly 0.9s ease-in-out 1s infinite; transform-origin: 50% 100%; }
+.celebrate-idle-spin { animation: celebrate-idle-spin 1.6s linear 1.1s infinite; }
+.celebrate-idle-tilt { animation: celebrate-idle-tilt 1s ease-in-out 1s infinite; transform-origin: 50% 90%; }
+.celebrate-idle-hop { animation: celebrate-idle-hop 0.8s ease-in-out 1.2s infinite; transform-origin: 50% 100%; }
+.celebrate-idle-pulse { animation: celebrate-idle-pulse 1s ease-in-out 1s infinite; }
+.celebrate-idle-poke { animation: celebrate-idle-poke 0.7s ease-in-out 1s infinite; }
+.celebrate-idle-updown { animation: celebrate-idle-updown 0.22s ease-in-out 1s infinite; }
+.celebrate-idle-stomp { animation: celebrate-idle-stomp 0.7s ease-in 1s infinite; transform-origin: 50% 100%; }
+.celebrate-idle-float { animation: celebrate-idle-float 2s ease-in-out 1s infinite; }
+.celebrate-jab-left { animation: celebrate-idle-pump 0.45s ease-in-out 0.9s infinite; transform-origin: 50% 100%; }
+.celebrate-jab-right { animation: celebrate-idle-pump 0.45s ease-in-out 1.12s infinite; transform-origin: 50% 100%; }
+
+@keyframes celebrate-idle-pump {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-26px) scale(1.07); }
+}
+@keyframes celebrate-idle-shake {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(-9px, 3px) rotate(-6deg); }
+  75% { transform: translate(9px, -3px) rotate(6deg); }
+}
+@keyframes celebrate-idle-jelly {
+  0%, 100% { transform: scale(1, 1); }
+  25% { transform: scale(1.18, 0.82); }
+  50% { transform: scale(0.88, 1.12); }
+  75% { transform: scale(1.06, 0.94); }
+}
+@keyframes celebrate-idle-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes celebrate-idle-tilt {
+  0%, 100% { transform: rotate(-14deg); }
+  50% { transform: rotate(14deg); }
+}
+@keyframes celebrate-idle-hop {
+  0%, 100% { transform: translateY(0) scale(1, 1); }
+  15% { transform: translateY(0) scale(1.12, 0.88); }
+  45% { transform: translateY(-48px) scale(0.94, 1.08); }
+  75% { transform: translateY(0) scale(1.1, 0.9); }
+}
+@keyframes celebrate-idle-pulse {
+  0%, 100% { transform: scale(1); }
+  15% { transform: scale(1.18); }
+  30% { transform: scale(1); }
+  45% { transform: scale(1.12); }
+}
+@keyframes celebrate-idle-poke {
+  0%, 100% { transform: scale(1); }
+  40% { transform: scale(1.3); }
+  55% { transform: scale(0.95); }
+}
+@keyframes celebrate-idle-updown {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-16px); }
+}
+@keyframes celebrate-idle-stomp {
+  0%, 55%, 100% { transform: none; }
+  25% { transform: translateY(22px) scale(1.1, 0.88); }
+}
+@keyframes celebrate-idle-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+/* Around the emoji: a pulsing glow, a one-off jolt of the whole popup on
+   landing, a red pulse for the angry one, and the phrase punching in. */
+.celebrate-glow { animation: celebrate-glow 2.4s ease-in-out infinite; }
+.celebrate-shake { animation: celebrate-shake 0.4s linear 0.45s both; }
+.celebrate-flash { animation: celebrate-flash 0.35s ease-in-out 0.6s infinite alternate; }
+.celebrate-punch { animation: celebrate-punch 0.5s cubic-bezier(0.3, 0.7, 0.3, 1) 0.75s both; }
+.celebrate-appear { animation: celebrate-appear 0.4s ease-out 1.05s both; }
+
+@keyframes celebrate-glow {
+  0%, 100% { transform: scale(0.92); opacity: 0.7; }
+  50% { transform: scale(1.06); opacity: 1; }
+}
+@keyframes celebrate-shake {
+  0%, 100% { transform: translate(0, 0); }
+  15% { transform: translate(-10px, 6px); }
+  30% { transform: translate(9px, -7px); }
+  45% { transform: translate(-7px, 4px); }
+  60% { transform: translate(5px, -3px); }
+  80% { transform: translate(-2px, 1px); }
+}
+@keyframes celebrate-flash {
+  from { opacity: 0; }
+  to { opacity: 0.45; }
+}
+@keyframes celebrate-punch {
+  0% { transform: scale(3) rotate(-10deg); opacity: 0; }
+  60% { transform: scale(0.9) rotate(3deg); opacity: 1; }
+  80% { transform: scale(1.06) rotate(-1deg); }
+  100% { transform: none; opacity: 1; }
+}
+@keyframes celebrate-appear {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Less motion asked for: no confetti or emoji rain (frozen pieces would just
+   be a row of specks along the top), and everything else standing still. */
 @media (prefers-reduced-motion: reduce) {
   .confetti-layer {
     display: none;
   }
-  .egg-wobble {
-    animation: none;
+  [class*="celebrate-"] {
+    animation: none !important;
   }
 }
 

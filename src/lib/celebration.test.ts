@@ -1,5 +1,11 @@
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { pickCelebrationTitle } from "./celebration";
+import { pickCelebrationTitle, pickCelebrationVariant } from "./celebration";
+import {
+  CELEBRATION_VARIANTS,
+  celebrationImageSrc,
+} from "./celebration-variants";
 import { cakeStrings as s } from "./strings";
 
 const titles: readonly string[] = s.celebrationTitles;
@@ -38,5 +44,38 @@ describe("pickCelebrationTitle", () => {
       ),
     );
     expect(picked).toEqual(new Set(titles.slice(1)));
+  });
+});
+
+describe("CELEBRATION_VARIANTS", () => {
+  it("has a unique id for each emoji", () => {
+    const ids = CELEBRATION_VARIANTS.map((variant) => variant.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("has every emoji's image in public/", () => {
+    for (const variant of CELEBRATION_VARIANTS) {
+      const file = join(process.cwd(), "public", celebrationImageSrc(variant));
+      expect(existsSync(file), file).toBe(true);
+    }
+  });
+});
+
+describe("pickCelebrationVariant", () => {
+  const ids = CELEBRATION_VARIANTS.map((variant) => variant.id);
+
+  it("can pick any emoji for the first sale", () => {
+    const picked = new Set(
+      ids.map((_, index) => pickCelebrationVariant(null, () => index / ids.length).id),
+    );
+    expect(picked).toEqual(new Set(ids));
+  });
+
+  it("never repeats the previous emoji, whatever the random number", () => {
+    for (const previous of ids) {
+      for (const r of [0, 0.25, 0.5, 0.75, 0.999999]) {
+        expect(pickCelebrationVariant(previous, () => r).id).not.toBe(previous);
+      }
+    }
   });
 });

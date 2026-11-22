@@ -113,6 +113,15 @@ because as far as the OS is concerned it now is one.
   mark + a sliding progress bar, pure CSS keyframes so it paints with the
   first HTML and needs no client JS to appear), shown on every full page
   load via the root layout and on route-level loading via `loading.tsx`.
+- **A joke popup after every new sale.** `SaleCelebration.tsx` throws one of
+  17 animated emoji at the screen (a middle finger, two of them, a hatching
+  chick, a clown and more), each with its own entrance and its own looping
+  motion (`src/lib/celebration-variants.ts`, CSS in `globals.css`), under a
+  random cheeky phrase (`cakeStrings.celebrationTitles`), with confetti.
+  Neither the emoji nor the phrase repeats twice in a row. The emoji are
+  Google's animated ones, stored in `public/celebrations/` (see
+  [Credits](#credits)); the next one is picked and preloaded as soon as the
+  sale form opens. Editing a sale doesn't trigger it.
 - **Installable as a real home-screen app.** `manifest.ts` (Next's file-based
   manifest convention) plus `icon.tsx` / `apple-icon.tsx` / `icons/` cover
   every icon surface — browser tab, iOS home screen, and the two Android
@@ -215,3 +224,11 @@ here).
 - Offline caching via a service worker — the app can be installed (see
   above) but a hard-offline reload before the browser has cached anything
   will still fail; a service worker would fix that.
+
+## Credits
+
+The animated emoji in `public/celebrations/` are from Google's
+[Noto Animated Emoji](https://googlefonts.github.io/noto-emoji-animation/),
+© Google, licensed under
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). They're used
+unmodified.
