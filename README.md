@@ -113,7 +113,9 @@ because as far as the OS is concerned it now is one.
   mark + a sliding progress bar, pure CSS keyframes so it paints with the
   first HTML and needs no client JS to appear), shown on every full page
   load via the root layout and on route-level loading via `loading.tsx`.
-- **A joke popup after every new sale.** `SaleCelebration.tsx` throws one of
+- **A joke popup after every new sale — switched off for now.** It's kept in
+  the code but disabled by `SALE_POPUP_ENABLED` in `src/lib/features.ts`;
+  set that to `true` to bring it back. `SaleCelebration.tsx` throws one of
   17 animated emoji at the screen (a middle finger, two of them, a hatching
   chick, a clown and more), each with its own entrance and its own looping
   motion (`src/lib/celebration-variants.ts`, CSS in `globals.css`), under a
