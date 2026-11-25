@@ -28,6 +28,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useToday } from "@/hooks/use-today";
 import { logout } from "@/lib/auth";
+import { SALE_POPUP_ENABLED } from "@/lib/features";
 import {
   pickCelebrationTitle,
   pickCelebrationVariant,
@@ -57,7 +58,13 @@ import type { CakeSale } from "@/lib/types";
 // Hebrew only, always — see src/lib/strings.ts.
 const HEBREW_TAG = "he-IL";
 
-export default function CakeTracker() {
+export default function CakeTracker({
+  salePopupEnabled = SALE_POPUP_ENABLED,
+}: {
+  /** Whether a new sale opens the joke popup. Defaults to the app-wide
+   * switch in `src/lib/features.ts`; tests pass it to cover both states. */
+  salePopupEnabled?: boolean;
+} = {}) {
   const sales = useCakeSales();
   const cakeTypes = useCakeTypes();
   const [sheet, setSheet] = useState<{
@@ -78,7 +85,7 @@ export default function CakeTracker() {
   function openSaleSheet(editing: CakeSale | null) {
     setSheetSession((session) => session + 1);
     setSheet({ open: true, editing });
-    if (!editing) prepareCelebration();
+    if (!editing && salePopupEnabled) prepareCelebration();
   }
 
   // Re-derived on focus/visibility (see the hook), not just on `sales`
@@ -116,6 +123,7 @@ export default function CakeTracker() {
       return;
     }
     const sale = addCakeSale(input);
+    if (!salePopupEnabled) return;
     // Picked here, in the event handler, not in a state updater: updaters
     // must be pure, and React may run them twice.
     const title = pickCelebrationTitle(celebration.title);
@@ -215,13 +223,17 @@ export default function CakeTracker() {
 
       <ManageCakeTypesSheet open={manageOpen} onOpenChange={setManageOpen} />
 
-      <SaleCelebration
-        open={celebration.open}
-        sale={celebration.sale}
-        title={celebration.title ?? ""}
-        variant={celebration.variant}
-        onOpenChange={(open) => setCelebration((prev) => ({ ...prev, open }))}
-      />
+      {salePopupEnabled && (
+        <SaleCelebration
+          open={celebration.open}
+          sale={celebration.sale}
+          title={celebration.title ?? ""}
+          variant={celebration.variant}
+          onOpenChange={(open) =>
+            setCelebration((prev) => ({ ...prev, open }))
+          }
+        />
+      )}
 
       <div className="grid grid-cols-2 gap-3">
         {stats.map((stat, index) => {

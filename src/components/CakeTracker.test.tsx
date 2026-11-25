@@ -74,7 +74,7 @@ describe("CakeTracker", () => {
     // Pins the random pick to the first phrase.
     vi.spyOn(Math, "random").mockReturnValue(0);
     const user = userEvent.setup();
-    render(<CakeTracker />);
+    render(<CakeTracker salePopupEnabled />);
 
     await logChocolateSale(user, 60);
 
@@ -100,7 +100,7 @@ describe("CakeTracker", () => {
     // ruled out as repeats) the second of each.
     vi.spyOn(Math, "random").mockReturnValue(0);
     const user = userEvent.setup();
-    render(<CakeTracker />);
+    render(<CakeTracker salePopupEnabled />);
 
     await logChocolateSale(user, 1);
     const first = await screen.findByRole("dialog", { name: "יא מוסס זין" });
@@ -119,12 +119,28 @@ describe("CakeTracker", () => {
 
   it("doesn't pop the celebration up after editing an existing sale", async () => {
     const user = userEvent.setup();
-    render(<CakeTracker />);
+    render(<CakeTracker salePopupEnabled />);
 
     await user.click(screen.getByRole("button", { name: "עריכת מכירה" }));
     await user.click(screen.getByRole("button", { name: "שמירת שינויים" }));
 
     expect(screen.queryByRole("dialog", { name: "יא מוסס זין" })).not.toBeInTheDocument();
     expect(screen.queryByTestId("confetti")).not.toBeInTheDocument();
+  });
+
+  // The popup is switched off for now (SALE_POPUP_ENABLED in
+  // src/lib/features.ts): a new sale is logged as usual, with no popup.
+  it("logs a new sale without any popup while the popup is switched off", async () => {
+    vi.spyOn(Math, "random").mockReturnValue(0);
+    const user = userEvent.setup();
+    render(<CakeTracker />);
+
+    await logChocolateSale(user, 3);
+
+    // 6 cakes in the fixture sale, plus these 3.
+    expect(await screen.findByText("9 עוגות נמכרו עד כה")).toBeInTheDocument();
+    expect(screen.queryByRole("dialog", { name: "יא מוסס זין" })).not.toBeInTheDocument();
+    expect(screen.queryByTestId("confetti")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("celebration-hero")).not.toBeInTheDocument();
   });
 });
